@@ -22,11 +22,12 @@ import "github.com/asgardeo/thunder/internal/flow/common"
 
 // Executor name constants
 const (
-	ExecutorNameBasicAuth = "BasicAuthExecutor"
-	ExecutorNameSMSAuth   = "SMSOTPAuthExecutor"
+	ExecutorNameBasicAuth     = "BasicAuthExecutor"
+	ExecutorNameSMSAuth       = "SMSOTPAuthExecutor"
+	ExecutorNameMagicLinkAuth = "MagicLinkAuthExecutor"
 	// nolint:gosec // G101: This is an executor name, not a credential
-	ExecutorNamePasskeyAuth                  = "PasskeyAuthExecutor"
-	ExecutorNameOAuth                        = "OAuthExecutor"
+	ExecutorNamePasskeyAuth = "PasskeyAuthExecutor"
+	ExecutorNameOAuth       = "OAuthExecutor"
 	ExecutorNameOIDCAuth                     = "OIDCAuthExecutor"
 	ExecutorNameGitHubAuth                   = "GithubOAuthExecutor"
 	ExecutorNameGoogleAuth                   = "GoogleOIDCAuthExecutor"
@@ -71,6 +72,7 @@ const (
 	userInputOuDesc           = "ouDescription"
 	userInputInviteToken      = "inviteToken"
 	userInputOTP              = "otp"
+	userInputMagicLinkToken   = "magicLinkToken"
 	userInputConsentDecisions = "consent_decisions"
 
 	ouIDKey        = "ouId"
@@ -107,9 +109,10 @@ var nonUserAttributes = []string{"userID", "code", "nonce", "state", "flowID",
 
 // Failure reason constants
 const (
-	failureReasonUserNotAuthenticated = "User is not authenticated"
-	failureReasonUserNotFound         = "User not found"
-	failureReasonInvalidCredentials   = "Invalid credentials provided" // #nosec G101
-	failureReasonFailedToIdentifyUser = "Failed to identify user"
-	failureReasonInvalidOTP           = "invalid OTP provided"
+	failureReasonUserNotAuthenticated  = "User is not authenticated"
+	failureReasonUserNotFound          = "User not found"
+	failureReasonInvalidCredentials    = "Invalid credentials provided" // #nosec G101
+	failureReasonFailedToIdentifyUser  = "Failed to identify user"
+	failureReasonInvalidOTP            = "invalid OTP provided"
+	failureReasonInvalidMagicLinkToken = "invalid magic link token provided"
 )

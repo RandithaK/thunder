@@ -177,16 +177,6 @@ func registerServices(mux *http.ServeMux) jwt.JWTServiceInterface {
 	// Initialize user provider based on configuration
 	userProvider := userprovider.InitializeUserProvider(userService)
 
-	// Initialize authentication services.
-	_, authSvcRegistry := authn.Initialize(
-		mux, mcpServer, idpService, jwtService, userService,
-		userProvider, otpService, authnProvider, consentService,
-	)
-
-	attributeCacheService := attributecache.Initialize()
-
-	// Initialize flow and executor services.
-	flowFactory, graphCache := flowcore.Initialize()
 	var emailClient email.EmailClientInterface
 	emailClient, err = email.Initialize()
 	if err != nil {
@@ -198,6 +188,17 @@ func registerServices(mux *http.ServeMux) jwt.JWTServiceInterface {
 	if err != nil {
 		logger.Fatal("Failed to initialize template service", log.Error(err))
 	}
+
+	// Initialize authentication services.
+	_, authSvcRegistry := authn.Initialize(
+		mux, mcpServer, idpService, jwtService, userService,
+		userProvider, otpService, authnProvider, consentService, emailClient, templateService,
+	)
+
+	attributeCacheService := attributecache.Initialize()
+
+	// Initialize flow and executor services.
+	flowFactory, graphCache := flowcore.Initialize()
 	execRegistry := executor.Initialize(flowFactory, ouService,
 		idpService, otpService, jwtService, authSvcRegistry, authZService, userSchemaService, observabilitySvc,
 		groupService, roleService, userProvider, attributeCacheService, emailClient, templateService)
