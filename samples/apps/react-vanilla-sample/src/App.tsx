@@ -28,9 +28,11 @@ import './App.css';
 const App = () => {
   const { token } = useAuth();
   const location = useLocation(); // Get the current location
+  const searchParams = new URLSearchParams(location.search);
+  const hasMagicLinkParams = searchParams.has('magicLinkToken') && searchParams.has('flowId');
 
   const renderContent = () => {
-    if (token) {
+    if (token && !hasMagicLinkParams) {
       return <HomePage />;
     } else {
       if (config.redirectBasedLogin) {
@@ -44,6 +46,7 @@ const App = () => {
   return (
     <Routes>
       <Route path="/" element={renderContent()} key={location.key} />
+      <Route path="/signin" element={renderContent()} key={`${location.key}-signin`} />
     </Routes>
   );
 };

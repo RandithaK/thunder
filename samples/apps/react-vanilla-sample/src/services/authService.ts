@@ -27,6 +27,18 @@ export const NativeAuthSubmitType = {
 
 export type NativeAuthSubmitType = (typeof NativeAuthSubmitType)[keyof typeof NativeAuthSubmitType];
 
+interface AuthServiceErrorResponse {
+    code?: string;
+    message?: string;
+    description?: string;
+}
+
+type AuthServiceError = Error & {
+    code?: string;
+    isNetworkError?: boolean;
+    statusCode?: number;
+};
+
 // WebAuthn/Passkey helper types
 export interface PasskeyCreationOptions {
     challenge: string;
@@ -222,6 +234,47 @@ type NativeAuthSubmitPayload =
 
 const { applicationID, clientId, flowEndpoint, redirectUri, tokenEndpoint } = config;
 
+const buildConfigurationError = (message: string): AuthServiceError => {
+    const serviceError = new Error(message) as AuthServiceError;
+    serviceError.isNetworkError = false;
+
+    return serviceError;
+};
+
+const buildAuthServiceError = (error: unknown, fallbackMessage: string): AuthServiceError => {
+    if (!axios.isAxiosError<AuthServiceErrorResponse>(error)) {
+        return new Error(fallbackMessage) as AuthServiceError;
+    }
+
+    const responseData = error.response?.data;
+    const message = responseData?.description || responseData?.message || error.message || fallbackMessage;
+    const serviceError = new Error(message) as AuthServiceError;
+
+    serviceError.code = responseData?.code;
+    serviceError.isNetworkError = !error.response;
+    serviceError.statusCode = error.response?.status;
+
+    return serviceError;
+};
+
+const getConfiguredFlowEndpoint = (): string => {
+    if (!flowEndpoint) {
+        throw buildConfigurationError('Thunder flow endpoint is not configured.');
+    }
+
+    return flowEndpoint;
+};
+
+const getConfiguredApplicationID = (): string => {
+    if (!applicationID) {
+        throw buildConfigurationError(
+            'Thunder application ID is not configured. Set it in runtime.json or VITE_REACT_APP_AUTH_APP_ID.',
+        );
+    }
+
+    return applicationID;
+};
+
 /**
  * Generates a cryptographically secure random code verifier for PKCE (RFC 7636).
  * 
@@ -282,12 +335,14 @@ export const initiateRedirectAuth = () => {
  * @returns {Promise<object>} - A promise that resolves to the response data from the server.
  */
 export const initiateNativeAuthFlow = async (flowType: 'LOGIN' | 'REGISTRATION' = 'LOGIN') => {
+    const configuredFlowEndpoint = getConfiguredFlowEndpoint();
+    const configuredApplicationID = getConfiguredApplicationID();
     const headers = {
         'Content-Type': 'application/json'
     };
 
     const data: Record<string, string> = {
-        "applicationId": applicationID
+        "applicationId": configuredApplicationID
     };
 
     if (flowType === 'REGISTRATION') {
@@ -297,21 +352,14 @@ export const initiateNativeAuthFlow = async (flowType: 'LOGIN' | 'REGISTRATION' 
     }
 
     try {
-        const response = await axios.post(`${flowEndpoint}/execute`, data, {
+        const response = await axios.post(`${configuredFlowEndpoint}/execute`, data, {
             headers,
         });
 
         return { data: response.data };
     } catch (error) {
-        if (axios.isAxiosError(error)) {
-            const flowTypeName = flowType === 'REGISTRATION' ? 'registration' : 'authentication';
-            const message = error.response?.status === 400
-              ? `Error initiating native ${flowTypeName} request.`
-              : error.response?.data?.message || 'Server error occurred.';
-            throw new Error(message);
-        } else {
-            throw new Error('Unexpected error occurred.');
-        }
+        const flowTypeName = flowType === 'REGISTRATION' ? 'registration' : 'authentication';
+        throw buildAuthServiceError(error, `Error initiating native ${flowTypeName} request.`);
     }
 };
 
@@ -325,12 +373,14 @@ export const initiateNativeAuthFlow = async (flowType: 'LOGIN' | 'REGISTRATION' 
  */
 export const initiateNativeAuthFlowWithData = async (flowType: 'LOGIN' | 'REGISTRATION' = 'LOGIN', 
     actionId: string | null, inputs?: Record<string, unknown>) => {
+    const configuredFlowEndpoint = getConfiguredFlowEndpoint();
+    const configuredApplicationID = getConfiguredApplicationID();
     const headers = {
         'Content-Type': 'application/json'
     };
 
     const data: Record<string, unknown> = {
-        "applicationId": applicationID,
+        "applicationId": configuredApplicationID,
     };
 
     if (actionId) {
@@ -349,21 +399,14 @@ export const initiateNativeAuthFlowWithData = async (flowType: 'LOGIN' | 'REGIST
     }
 
     try {
-        const response = await axios.post(`${flowEndpoint}/execute`, data, {
+        const response = await axios.post(`${configuredFlowEndpoint}/execute`, data, {
             headers,
         });
 
         return { data: response.data };
     } catch (error) {
-        if (axios.isAxiosError(error)) {
-            const flowTypeName = flowType === 'REGISTRATION' ? 'registration' : 'authentication';
-            const message = error.response?.status === 400
-              ? `Error initiating native ${flowTypeName} request.`
-              : error.response?.data?.message || 'Server error occurred.';
-            throw new Error(message);
-        } else {
-            throw new Error('Unexpected error occurred.');
-        }
+        const flowTypeName = flowType === 'REGISTRATION' ? 'registration' : 'authentication';
+        throw buildAuthServiceError(error, `Error initiating native ${flowTypeName} request.`);
     }
 };
 
@@ -376,6 +419,7 @@ export const initiateNativeAuthFlowWithData = async (flowType: 'LOGIN' | 'REGIST
  * @returns {Promise<object>} - A promise that resolves to the response data from the server.
  */
 export const submitAuthDecision = async (flowId: string, actionId: string, inputs?: Record<string, unknown>) => {
+    const configuredFlowEndpoint = getConfiguredFlowEndpoint();
     const headers = {
         'Content-Type': 'application/json'
     };
@@ -391,20 +435,13 @@ export const submitAuthDecision = async (flowId: string, actionId: string, input
     }
 
     try {
-        const response = await axios.post(`${flowEndpoint}/execute`, data, {
+        const response = await axios.post(`${configuredFlowEndpoint}/execute`, data, {
             headers,
         });
 
         return { data: response.data };
     } catch (error) {
-        if (axios.isAxiosError(error)) {
-            const message = error.response?.status === 400
-              ? 'Error processing authentication option.'
-              : error.response?.data?.message || 'Server error occurred.';
-            throw new Error(message);
-        } else {
-            throw new Error('Unexpected error occurred.');
-        }
+        throw buildAuthServiceError(error, 'Error processing authentication option.');
     }
 };
 
@@ -421,6 +458,7 @@ export const submitNativeAuth = async (
     payload: Record<string, unknown> | NativeAuthSubmitPayload,
     action?: string
 ) => {
+    const configuredFlowEndpoint = getConfiguredFlowEndpoint();
     const headers = {
         'Content-Type': 'application/json'
     };
@@ -454,22 +492,26 @@ export const submitNativeAuth = async (
     }
 
     try {
-        const response = await axios.post(`${flowEndpoint}/execute`, data, {
+        const response = await axios.post(`${configuredFlowEndpoint}/execute`, data, {
             headers,
         });
 
         return { data: response.data };
     } catch (error) {
-        if (axios.isAxiosError(error)) {
-            const message = error.response?.status === 400
-              ? 'Login failed. Please check your credentials.'
-              : error.response?.data?.message || 'Server error occurred.';
-            throw new Error(message);
-        } else {
-            throw new Error('Unexpected error occurred.');
-        }
+        throw buildAuthServiceError(error, 'Login failed. Please check your credentials.');
     }
 }
+
+/**
+ * Submits a magic link token to resume a flow from an email link.
+ *
+ * @param {string} flowId - The flow ID included in the magic link URL.
+ * @param {string} magicLinkToken - The token included in the magic link URL.
+ * @returns {Promise<object>} - A promise that resolves to the flow response data.
+ */
+export const submitMagicLink = async (flowId: string, magicLinkToken: string) => {
+    return submitNativeAuth(flowId, { magicLinkToken });
+};
 
 /**
  * Exchanges the authorization code for an access token.

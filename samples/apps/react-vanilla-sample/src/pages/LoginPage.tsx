@@ -48,6 +48,7 @@ import {
     NativeAuthSubmitType, 
     initiateNativeAuthFlow,
     initiateNativeAuthFlowWithData,
+    submitMagicLink,
     submitNativeAuth, 
     submitAuthDecision 
 } from '../services/authService';
@@ -91,8 +92,10 @@ interface AuthResponse {
 // Define the interface for the submission error
 interface SubmissionError {
     code?: string;
+    isNetworkError?: boolean;
     message?: string;
     description?: string;
+    statusCode?: number;
 }
 
 /**
@@ -135,6 +138,9 @@ const LoginPage = () => {
     const [isSignupMode, setIsSignupMode] = useState<boolean>(false);
     const [regOnlySuccess, setRegOnlySuccess] = useState<boolean>(false);
     const [promptRegistration, setPromptRegistration] = useState<boolean>(false);
+    const [magicLinkEmailSent, setMagicLinkEmailSent] = useState<boolean>(false);
+    const [isMagicLinkValidating, setIsMagicLinkValidating] = useState<boolean>(false);
+    const [isMagicLinkInvalid, setIsMagicLinkInvalid] = useState<boolean>(false);
     
     // Passkey registration state
     const [passkeyCreationOptions, setPasskeyCreationOptions] = useState<string | null>(null);
@@ -157,6 +163,31 @@ const LoginPage = () => {
           </>
         );
     }
+
+    const cleanAuthQueryParams = useCallback(() => {
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }, []);
+
+    const isMagicLinkAction = useCallback((action?: ActionPrompt | string | null) => {
+        if (!action) {
+            return false;
+        }
+
+        const actionValue = typeof action === 'string'
+            ? action
+            : [action.ref, action.nextNode, action.label].filter(Boolean).join(' ');
+
+        return actionValue.toLowerCase().includes('magic');
+    }, []);
+
+    const isMagicLinkEmailPrompt = useCallback((
+        promptInputs: AuthInput[] = inputs,
+        promptActions: ActionPrompt[] = availableActions,
+    ) => {
+        return promptInputs.length === 1
+            && promptInputs[0]?.identifier === 'email'
+            && promptActions.some(action => isMagicLinkAction(action));
+    }, [availableActions, inputs, isMagicLinkAction]);
 
     // OTP input handling
     const otpLength = 6;
@@ -258,13 +289,48 @@ const LoginPage = () => {
         window.location.href = redirectURL;
     }, [flowId]);
 
+    const handleSubmissionError = useCallback((error: SubmissionError, isMagicLinkValidationError: boolean = false) => {
+        if (isMagicLinkValidationError) {
+            setIsMagicLinkValidating(false);
+            setIsMagicLinkInvalid(true);
+            setConnectionError(false);
+            setError(false);
+            setErrorMessage(error.message || 'This magic link is invalid or has expired.');
+            setLoading(false);
+            return;
+        }
+
+        if (error.isNetworkError || (error.message && error.message.includes("Network Error"))) {
+            setConnectionError(true);
+        } else {
+            setError(true);
+            setErrorMessage(error.message || 'Error during authentication');
+        }
+        setLoading(false);
+    }, []);
+
     // Process authentication response
-    const processAuthResponse = useCallback((data: AuthResponse, selectedAction?: string) => {
+    const processAuthResponse = useCallback((
+        data: AuthResponse,
+        selectedAction?: string,
+        isMagicLinkValidationResponse: boolean = false,
+    ) => {
         const isCameFromDecision = needsDecision;
         const isMobileLogin = selectedAction && selectedAction.includes('mobile');
+        const wasMagicLinkValidation = isMagicLinkValidationResponse;
+        const wasMagicLinkRequest = !isSignupMode && isMagicLinkEmailPrompt(inputs, availableActions);
 
         setFlowId(data.flowId || '');
         if (data.flowStatus && data.flowStatus == 'ERROR') {
+            if (wasMagicLinkValidation) {
+                setIsMagicLinkValidating(false);
+                setIsMagicLinkInvalid(true);
+                setError(false);
+                setErrorMessage(data.failureReason || 'This magic link is invalid or has expired.');
+                setLoading(false);
+                return;
+            }
+
             if (isMobileLogin && data?.failureReason && data.failureReason.includes("User not found")) {
                 console.log("User not found, prompting registration");
                 setPromptRegistration(true);
@@ -302,6 +368,9 @@ const LoginPage = () => {
         setRedirectURL(null);
         setSocialIdpName('');
         setRegOnlySuccess(false);
+        setMagicLinkEmailSent(false);
+        setIsMagicLinkValidating(false);
+        setIsMagicLinkInvalid(false);
         setPasskeyCreationOptions(null);
         setPasskeyChallenge(null);
 
@@ -309,6 +378,8 @@ const LoginPage = () => {
             setError(false);
             if (data.assertion) {
                 setToken(data.assertion);
+            } else if (wasMagicLinkRequest) {
+                setMagicLinkEmailSent(true);
             } else {
                 setRegOnlySuccess(true);
             }
@@ -349,9 +420,7 @@ const LoginPage = () => {
                     })
                     .catch((error) => {
                         console.error("Error auto-executing single action:", error);
-                        setError(true);
-                        setErrorMessage('An error occurred. Please try again.');
-                        setLoading(false);
+                        handleSubmissionError(error);
                     });
                 return; // Don't set loading to false yet
             }
@@ -374,7 +443,18 @@ const LoginPage = () => {
         }
 
         setLoading(false);
-    }, [needsDecision, isSignupMode, clearToken, setToken, handleSocialLoginClick]);
+    }, [
+        needsDecision,
+        isSignupMode,
+        inputs,
+        availableActions,
+        clearToken,
+        setToken,
+        flowId,
+        handleSocialLoginClick,
+        handleSubmissionError,
+        isMagicLinkEmailPrompt,
+    ]);
 
     // Handle when user selects an authentication option
     const handleAuthOptionSelection = (actionId: string) => {
@@ -387,9 +467,7 @@ const LoginPage = () => {
             })
             .catch((error) => {
                 console.error("Error during authentication decision:", error);
-                setError(true);
-                setErrorMessage(error.message || 'Error processing your selection');
-                setLoading(false);
+                handleSubmissionError(error);
             });
     };
 
@@ -405,6 +483,9 @@ const LoginPage = () => {
         setRedirectURL(null);
         setSocialIdpName('');
         setRegOnlySuccess(false);
+        setMagicLinkEmailSent(false);
+        setIsMagicLinkValidating(false);
+        setIsMagicLinkInvalid(false);
         setPasskeyCreationOptions(null);
         setPasskeyChallenge(null);
 
@@ -456,9 +537,7 @@ const LoginPage = () => {
                             })
                             .catch((error) => {
                                 console.error("Error auto-executing single action:", error);
-                                setError(true);
-                                setErrorMessage('An error occurred. Please try again.');
-                                setLoading(false);
+                                handleSubmissionError(error);
                             });
                         return; // Don't set loading to false yet
                     }
@@ -479,10 +558,9 @@ const LoginPage = () => {
             }).catch((error) => {
                 const errorType = isSignupMode ? "registration" : "auth";
                 console.error(`Error during ${errorType} initialization:`, error);
-                setConnectionError(true);
-                setLoading(false);
+                handleSubmissionError(error);
             });
-    }, [clearToken, isSignupMode, setToken]);
+    }, [clearToken, handleSubmissionError, processAuthResponse, setToken]);
 
     // Initialize the prompt signup decision action
     const initPromptSignupDecision = () => {
@@ -495,6 +573,9 @@ const LoginPage = () => {
         setSocialIdpName('');
         setRegOnlySuccess(false);
         setPromptRegistration(false);
+        setMagicLinkEmailSent(false);
+        setIsMagicLinkValidating(false);
+        setIsMagicLinkInvalid(false);
         setPasskeyCreationOptions(null);
         setPasskeyChallenge(null);
 
@@ -552,9 +633,7 @@ const LoginPage = () => {
                             })
                             .catch((error) => {
                                 console.error("Error auto-executing single action:", error);
-                                setError(true);
-                                setErrorMessage('An error occurred. Please try again.');
-                                setLoading(false);
+                                handleSubmissionError(error);
                             });
                         return; // Don't set loading to false yet
                     }
@@ -575,8 +654,7 @@ const LoginPage = () => {
             }).catch((error) => {
                 console.error(`Error during user registration:`, error);
                 setInputs([]);
-                setConnectionError(true);
-                setLoading(false);
+                handleSubmissionError(error);
             });
     };
 
@@ -625,17 +703,6 @@ const LoginPage = () => {
                     handleSubmissionError(error);
                 });
         }
-    };
-
-    const handleSubmissionError = (error: SubmissionError) => {
-        // Check if it's a network error or authentication error
-        if (error.message && error.message.includes("Network Error")) {
-            setConnectionError(true);
-        } else {
-            setError(true);
-            setErrorMessage(error.message || 'Error during authentication');
-        }
-        setLoading(false);
     };
 
     // Handler for passkey credential creation
@@ -703,32 +770,39 @@ const LoginPage = () => {
     };
 
     const handleRetry = () => {
+        cleanAuthQueryParams();
+        setIsMagicLinkValidating(false);
+        setIsMagicLinkInvalid(false);
+        setMagicLinkEmailSent(false);
+        sessionStorage.removeItem(FLOW_ID_KEY);
+        sessionStorage.setItem(START_INIT_KEY, "true");
         setTimeout(() => {
-            init();
+            init(false);
         }, 500);
     };
     
-    // Helper function to get appropriate icon for social login
-    const getSocialLoginIcon = (idpName: string) => {
-        const lowerIdpName = idpName.toLowerCase();
+    // Helper function to get appropriate icon for action buttons.
+    const getActionIcon = (actionName: string) => {
+        const lowerActionName = actionName.toLowerCase();
         
-        if (lowerIdpName.includes('github')) {
+        if (lowerActionName.includes('github')) {
             return <GitHubIcon />;
-        } else if (lowerIdpName.includes('google')) {
+        } else if (lowerActionName.includes('google')) {
             return <GoogleIcon />;
         } else {
             return <AccountCircleIcon />;
         }
     };
 
-    // Get social login button text
-    const getSocialLoginText = (actionId: string) => {
+    const getActionButtonText = (actionId: string) => {
         const prefix = isSignupMode ? 'Sign up' : 'Continue';
         
         if (actionId.includes('google')) {
             return `${prefix} with Google`;
         } else if (actionId.includes('github')) {
             return `${prefix} with GitHub`;
+        } else if (actionId.includes('magic')) {
+            return `${prefix} with Magic Link`;
         } else if (actionId.includes('mobile')) {
             return `${prefix} with SMS OTP`;
         } else {
@@ -745,17 +819,42 @@ const LoginPage = () => {
         if (isComponentReMount.current) return;
         isComponentReMount.current = true;
 
-        if (startInit) {
+        const params = new URLSearchParams(window.location.search);
+        const magicLinkToken = params.get('magicLinkToken');
+        const magicLinkFlowId = params.get('flowId');
+        const code = params.get('code');
+
+        if (magicLinkFlowId && magicLinkToken) {
+            sessionStorage.removeItem(FLOW_ID_KEY);
+            sessionStorage.setItem(START_INIT_KEY, "true");
+            clearToken();
+            setError(false);
+            setErrorMessage('');
+            setConnectionError(false);
+            setPromptRegistration(false);
+            setRegOnlySuccess(false);
+            setMagicLinkEmailSent(false);
+            setIsMagicLinkInvalid(false);
+            setIsMagicLinkValidating(true);
+            setFlowId(magicLinkFlowId);
+            setLoading(true);
+
+            submitMagicLink(magicLinkFlowId, magicLinkToken)
+                .then((result) => {
+                    processAuthResponse(result.data, undefined, true);
+                }).catch((error) => {
+                    console.error("Error during magic link authentication:", error);
+                    handleSubmissionError(error, true);
+                }).finally(() => {
+                    cleanAuthQueryParams();
+                });
+        } else if (startInit) {
             // Initialize login execution flow if fresh start
             init();
         } else {
-            // This effect is to handle when return from federated IDP login
-            const params = new URLSearchParams(window.location.search);
-            const code = params.get('code');
-
             if (code) {
                 // Clear query parameters to avoid re-submission
-                window.history.replaceState({}, document.title, window.location.pathname);
+                cleanAuthQueryParams();
 
                 submitNativeAuth(flowId, { type: NativeAuthSubmitType.SOCIAL, code: code })
                     .then((result) => {
@@ -771,7 +870,15 @@ const LoginPage = () => {
 
             sessionStorage.setItem(START_INIT_KEY, "true");
         }
-    },[startInit, init, flowId, setToken, processAuthResponse]);
+    },[
+        startInit,
+        init,
+        flowId,
+        clearToken,
+        handleSubmissionError,
+        processAuthResponse,
+        cleanAuthQueryParams,
+    ]);
 
     // Render input fields based on the current inputs array
     const renderInputFields = () => {
@@ -908,14 +1015,13 @@ const LoginPage = () => {
             action.nextNode === "mobile_prompt_username" || action.nextNode === "prompt_mobile"
         );
         
-        const hasSocialAuth = availableActions.some(action => 
-            action.nextNode?.includes("google") || action.nextNode?.includes("github")
+        const socialAndMagicActions = availableActions.filter(action => 
+            action.nextNode?.includes("google")
+            || action.nextNode?.includes("github")
+            || isMagicLinkAction(action)
         );
+        const hasSocialAuth = socialAndMagicActions.length > 0;
         const hasMobileAuth = mobileAuthActions.length > 0;
-        
-        const socialAuthActions = availableActions.filter(action => 
-            action.nextNode?.includes("google") || action.nextNode?.includes("github")
-        );
         
         return (
             <Box sx={{ my: 4 }}>
@@ -998,7 +1104,7 @@ const LoginPage = () => {
                         {/* Social auth options */}
                         {hasSocialAuth && (
                             <Box>
-                                {socialAuthActions.map((action, index) => (
+                                {socialAndMagicActions.map((action, index) => (
                                     <Button
                                         key={`social-action-${index}`}
                                         fullWidth
@@ -1006,9 +1112,9 @@ const LoginPage = () => {
                                         color="secondary"
                                         onClick={() => handleAuthOptionSelection(action.ref)}
                                         sx={{ my: 1 }}
-                                        startIcon={getSocialLoginIcon(action.nextNode || '')}
+                                        startIcon={getActionIcon(action.nextNode || action.label || action.ref)}
                                     >
-                                        {getSocialLoginText(action.nextNode || '')}
+                                        {getActionButtonText(action.label || action.nextNode || action.ref)}
                                     </Button>
                                 ))}
                             </Box>
@@ -1067,21 +1173,20 @@ const LoginPage = () => {
         );
         
         const hasBasicAuth = !!basicAuthAction;
-        const hasSocialAuth = availableActions.some(action => 
-            action.nextNode?.includes("google") || action.nextNode?.includes("github")
+        const socialAndMagicActions = availableActions.filter(action => 
+            action.nextNode?.includes("google")
+            || action.nextNode?.includes("github")
+            || isMagicLinkAction(action)
         );
+        const hasSocialAuth = socialAndMagicActions.length > 0;
         const hasMobileAuth = mobileAuthActions.length > 0;
-        
-        const socialAuthActions = availableActions.filter(action => 
-            action.nextNode?.includes("google") || action.nextNode?.includes("github")
-        );
 
         return (
             <Box sx={{ my: 2 }}>
                 {/* Social auth options */}
                 {hasSocialAuth && (
                     <Box>
-                        {socialAuthActions.map((action, index) => (
+                        {socialAndMagicActions.map((action, index) => (
                             <Button
                                 key={`social-action-${index}`}
                                 fullWidth
@@ -1089,9 +1194,9 @@ const LoginPage = () => {
                                 color="secondary"
                                 onClick={() => handleAuthOptionSelection(action.ref)}
                                 sx={{ my: 1 }}
-                                startIcon={getSocialLoginIcon(action.nextNode || '')}
+                                startIcon={getActionIcon(action.nextNode || action.label || action.ref)}
                             >
-                                {getSocialLoginText(action.nextNode || '')}
+                                {getActionButtonText(action.label || action.nextNode || action.ref)}
                             </Button>
                         ))}
                     </Box>
@@ -1260,6 +1365,8 @@ const LoginPage = () => {
                                 ) 
                                 : inputs.some(input => input.identifier === 'otp') ? 
                                     'Verify OTP' 
+                                    : isMagicLinkEmailPrompt() ?
+                                        'Send Magic Link'
                                     : 'Continue'
                         }
                     </Button>
@@ -1272,6 +1379,8 @@ const LoginPage = () => {
                                 let label = "Continue";
                                 if (action.nextNode?.includes("passkey")) {
                                     label = "Sign in with Passkey";
+                                } else if (isMagicLinkAction(action)) {
+                                    label = getActionButtonText(action.label || action.nextNode || action.ref);
                                 } else if (action.label) {
                                     label = action.label;
                                 }
@@ -1284,7 +1393,13 @@ const LoginPage = () => {
                                         color="secondary"
                                         onClick={() => handleAuthOptionSelection(action.ref)}
                                         sx={{ mb: 1 }}
-                                        startIcon={action.nextNode?.includes("passkey") ? <FingerprintIcon /> : undefined}
+                                        startIcon={
+                                            action.nextNode?.includes("passkey")
+                                                ? <FingerprintIcon />
+                                                : isMagicLinkAction(action)
+                                                    ? getActionIcon(action.label || action.nextNode || action.ref)
+                                                    : undefined
+                                        }
                                     >
                                         {label}
                                     </Button>
@@ -1305,7 +1420,7 @@ const LoginPage = () => {
             `Continue with ${socialIdpName}` :
             'Continue with Social Login';
         
-        const icon = getSocialLoginIcon(socialIdpName);
+        const icon = getActionIcon(socialIdpName);
         
         return (
             <Box sx={{ my: 2 }}>
@@ -1341,7 +1456,7 @@ const LoginPage = () => {
 
     return (
         <Layout>
-            { loading ? (
+            { loading && !isMagicLinkValidating ? (
                 <GradientCircularProgress />
             ) : (
                 <Grid size={{ xs: 12, md: gridMdSize }}>
@@ -1364,7 +1479,34 @@ const LoginPage = () => {
                             }}
                         >
                             <Box>
-                                {promptRegistration ? (
+                                {isMagicLinkValidating ? (
+                                    <Box sx={{ mb: 4 }}>
+                                        <Typography variant="h5" gutterBottom>
+                                            Validating your magic link
+                                        </Typography>
+                                        <Typography>
+                                            We&apos;re verifying your sign-in link now.
+                                        </Typography>
+                                    </Box>
+                                ) : isMagicLinkInvalid ? (
+                                    <Box sx={{ mb: 4 }}>
+                                        <Typography variant="h5" gutterBottom>
+                                            Unable to verify magic link
+                                        </Typography>
+                                        <Typography>
+                                            This magic link is invalid or has expired.
+                                        </Typography>
+                                    </Box>
+                                ) : magicLinkEmailSent ? (
+                                    <Box sx={{ mb: 4 }}>
+                                        <Typography variant="h5" gutterBottom>
+                                            Check your email
+                                        </Typography>
+                                        <Typography>
+                                            We sent you a magic sign-in link. Open it to continue signing in.
+                                        </Typography>
+                                    </Box>
+                                ) : promptRegistration ? (
                                     <Box sx={{ mb: 4 }}>
                                         <Typography variant="h5" gutterBottom>
                                             We couldn&apos;t find your account
@@ -1399,6 +1541,8 @@ const LoginPage = () => {
                                                             setIsSignupMode(false);
                                                             setError(false);
                                                             setErrorMessage('');
+                                                            setMagicLinkEmailSent(false);
+                                                            setIsMagicLinkInvalid(false);
                                                             init(false);
                                                         }}
                                                         underline="hover"
@@ -1416,6 +1560,8 @@ const LoginPage = () => {
                                                             setIsSignupMode(true);
                                                             setError(false);
                                                             setErrorMessage('');
+                                                            setMagicLinkEmailSent(false);
+                                                            setIsMagicLinkInvalid(false);
                                                             init(true);
                                                         }}
                                                         underline="hover"
@@ -1436,14 +1582,50 @@ const LoginPage = () => {
                                     />
                                 )}
 
-                                {error && !connectionError && (
+                                {error && !connectionError && !isMagicLinkInvalid && (
                                     <Alert severity="error" sx={{ my: 2 }}>
                                         {errorMessage}
                                     </Alert>
                                 )}
 
                                 {!connectionError && (
-                                    promptRegistration ? (
+                                    isMagicLinkValidating ? (
+                                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 3, gap: 2 }}>
+                                            <CircularProgress />
+                                            <Typography>Validating your magic link...</Typography>
+                                        </Box>
+                                    ) : isMagicLinkInvalid ? (
+                                        <Box sx={{ mb: 4 }}>
+                                            <Alert severity="error" sx={{ my: 2 }}>
+                                                {errorMessage || 'This magic link is invalid or has expired.'}
+                                            </Alert>
+                                            <Button
+                                                variant="contained"
+                                                color="primary"
+                                                fullWidth
+                                                onClick={() => {
+                                                    setError(false);
+                                                    setErrorMessage('');
+                                                    handleRetry();
+                                                }}
+                                            >
+                                                Back to Login
+                                            </Button>
+                                        </Box>
+                                    ) : magicLinkEmailSent ? (
+                                        <Button
+                                            variant="contained"
+                                            color="primary"
+                                            onClick={() => {
+                                                setError(false);
+                                                setErrorMessage('');
+                                                handleRetry();
+                                            }}
+                                            fullWidth
+                                        >
+                                            Back to Login
+                                        </Button>
+                                    ) : promptRegistration ? (
                                         <Box sx={{ mb: 4 }}>
                                             <Button
                                                 variant="contained"
@@ -1521,6 +1703,7 @@ const LoginPage = () => {
                                                 setIsSignupMode(false);
                                                 setError(false);
                                                 setErrorMessage('');
+                                                setMagicLinkEmailSent(false);
                                                 init(false);
                                             }}
                                             fullWidth

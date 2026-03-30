@@ -79,7 +79,7 @@ When using Native Flow, the sample app UI renders based on `nextNode` values in 
 The sample app now supports backend-generated magic links for native flow authentication.
 
 - Magic link emails should point to the sample app's `/signin` route
-- The link is expected to include `queryParams` and `magicLinkToken` query parameters
+- The link is expected to include `queryParams` and `code` query parameters
 - When the user opens the link, the sample resumes the existing flow and validates the token automatically
 
 ### 2. Start the Application
@@ -97,6 +97,8 @@ sh start.sh
 ### 3. Access the Application
 
 Open your browser and navigate to [https://localhost:3000](https://localhost:3000)
+
+Magic link entry URLs should use [https://localhost:3000/signin](https://localhost:3000/signin).
 
 ## Development
 
