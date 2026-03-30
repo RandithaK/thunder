@@ -74,6 +74,14 @@ When using Native Flow, the sample app UI renders based on `nextNode` values in 
 | `google_auth` | Google OAuth |
 | `prompt_mobile` or `mobile_prompt_username` | SMS OTP authentication |
 
+#### Magic Link Support
+
+The sample app now supports backend-generated magic links for native flow authentication.
+
+- Magic link emails should point to the sample app's `/signin` route
+- The link is expected to include `queryParams` and `magicLinkToken` query parameters
+- When the user opens the link, the sample resumes the existing flow and validates the token automatically
+
 ### 2. Start the Application
 
 **Linux/macOS:**
