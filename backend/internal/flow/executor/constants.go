@@ -112,4 +112,5 @@ const (
 	failureReasonInvalidCredentials   = "Invalid credentials provided" // #nosec G101
 	failureReasonFailedToIdentifyUser = "Failed to identify user"
 	failureReasonInvalidOTP           = "invalid OTP provided"
+	failureReasonInvalidMagicLink     = "Invalid magic link token"
 )

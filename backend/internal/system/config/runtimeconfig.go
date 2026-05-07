@@ -19,8 +19,9 @@
 package config
 
 import (
-	"fmt"
+	"net"
 	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -44,13 +45,19 @@ func InitializeServerRuntime(serverHome string, config *Config) error {
 		if strings.TrimSpace(loginPath) == "" {
 			loginPath = "/signin"
 		}
-		rawURL := fmt.Sprintf("%s://%s:%d%s",
-			config.GateClient.Scheme,
-			config.GateClient.Hostname,
-			config.GateClient.Port,
-			loginPath,
-		)
-		parsedURL, _ := url.Parse(rawURL)
+
+		portStr := strconv.Itoa(config.GateClient.Port)
+		hostWithPort := net.JoinHostPort(config.GateClient.Hostname, portStr)
+
+		baseURL := &url.URL{
+			Scheme: config.GateClient.Scheme,
+			Host:   hostWithPort,
+		}
+
+		parsedPath, _ := url.Parse(loginPath)
+
+		parsedURL := baseURL.ResolveReference(parsedPath)
+
 		runtimeConfig = &ServerRuntime{
 			ServerHome:         serverHome,
 			GateClientLoginURL: parsedURL,

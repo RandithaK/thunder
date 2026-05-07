@@ -49,11 +49,12 @@ const (
 	magicLinkTestOUID         = "ou-123"
 	magicLinkTestUserType     = "INTERNAL"
 	magicLinkTestMagicLinkURL = "https://example.com/verify"
+	magicLinkTestJWTHeader    = `{"alg":"HS256","typ":"JWT"}`
 )
 
 // createTestJWTWithClaims creates a test JWT string with the given executionId and jti
 func createTestJWTWithClaims(executionID, jti string) string {
-	header := `{"alg":"HS256","typ":"JWT"}`
+	header := magicLinkTestJWTHeader
 	payload := fmt.Sprintf(`{"sub":"user-123","executionId":%q,"jti":%q,"exp":9999999999}`, executionID, jti)
 
 	headerB64 := base64.RawURLEncoding.EncodeToString([]byte(header))
@@ -62,11 +63,11 @@ func createTestJWTWithClaims(executionID, jti string) string {
 	return headerB64 + "." + payloadB64 + ".test-signature"
 }
 
-func createRegistrationMagicLinkJWT(executionID, jti, email string) string {
-	header := `{"alg":"HS256","typ":"JWT"}`
+func createRegistrationMagicLinkJWT(executionID, jti, subject string) string {
+	header := magicLinkTestJWTHeader
 	payload := fmt.Sprintf(
 		`{"sub":%q,"email":%q,"registration":true,"executionId":%q,"jti":%q,"exp":9999999999}`,
-		email, email, executionID, jti)
+		subject, subject, executionID, jti)
 
 	headerB64 := base64.RawURLEncoding.EncodeToString([]byte(header))
 	payloadB64 := base64.RawURLEncoding.EncodeToString([]byte(payload))
@@ -183,9 +184,12 @@ func (suite *MagicLinkAuthExecutorTestSuite) TestExecute_GenerateMode_Success_Au
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), resp)
 	assert.Equal(suite.T(), common.ExecComplete, resp.Status)
+	templateData, ok := resp.ForwardedData[common.ForwardedDataKeyTemplateData].(map[string]interface{})
+	assert.True(suite.T(), ok, "Template data should be present in ForwardedData")
+	// Assert the correct values are inside the template data
 	expectedURL := "https://example.com/verify?id=flow-123&token=jwt-token-123"
-	assert.Equal(suite.T(), expectedURL, resp.RuntimeData[common.RuntimeKeyMagicLinkURL])
-	assert.Equal(suite.T(), "5", resp.RuntimeData[common.RuntimeKeyMagicLinkExpiryMinutes])
+	assert.Equal(suite.T(), expectedURL, templateData["magicLink"])
+	assert.Equal(suite.T(), "5", templateData["expiryMinutes"])
 	assert.Equal(suite.T(), magicLinkTestUserID, resp.RuntimeData[userAttributeUserID])
 	suite.mockEntityProvider.AssertExpectations(suite.T())
 	suite.mockMagicLinkService.AssertExpectations(suite.T())
@@ -219,9 +223,11 @@ func (suite *MagicLinkAuthExecutorTestSuite) TestExecute_GenerateMode_Success_Re
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), resp)
 	assert.Equal(suite.T(), common.ExecComplete, resp.Status)
-	assert.Equal(suite.T(), "https://example.com/verify?id=flow-123&token=jwt-token-123",
-		resp.RuntimeData[common.RuntimeKeyMagicLinkURL])
-	assert.Equal(suite.T(), "5", resp.RuntimeData[common.RuntimeKeyMagicLinkExpiryMinutes])
+	templateData, ok := resp.ForwardedData[common.ForwardedDataKeyTemplateData].(map[string]interface{})
+	assert.True(suite.T(), ok, "Template data should be present in ForwardedData")
+	expectedURL := "https://example.com/verify?id=flow-123&token=jwt-token-123"
+	assert.Equal(suite.T(), expectedURL, templateData["magicLink"])
+	assert.Equal(suite.T(), "5", templateData["expiryMinutes"])
 	assert.Equal(suite.T(), magicLinkTestEmail, resp.RuntimeData[userAttributeEmail])
 	assert.Equal(suite.T(), userAttributeEmail, resp.RuntimeData[common.RuntimeKeyMagicLinkDestinationAttribute])
 	suite.mockEntityProvider.AssertExpectations(suite.T())
@@ -259,8 +265,11 @@ func (suite *MagicLinkAuthExecutorTestSuite) TestExecute_GenerateMode_Success_Re
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), resp)
 	assert.Equal(suite.T(), common.ExecComplete, resp.Status)
-	assert.Equal(suite.T(), "https://example.com/verify?id=flow-123&token=jwt-token-123",
-		resp.RuntimeData[common.RuntimeKeyMagicLinkURL])
+
+	templateData, ok := resp.ForwardedData[common.ForwardedDataKeyTemplateData].(map[string]interface{})
+	assert.True(suite.T(), ok)
+	assert.Equal(suite.T(), "https://example.com/verify?id=flow-123&token=jwt-token-123", templateData["magicLink"])
+
 	assert.Equal(suite.T(), "+1234567890", resp.RuntimeData["mobileNumber"])
 	assert.Equal(suite.T(), "mobileNumber", resp.RuntimeData[common.RuntimeKeyMagicLinkDestinationAttribute])
 	suite.mockEntityProvider.AssertExpectations(suite.T())
@@ -323,7 +332,11 @@ func (suite *MagicLinkAuthExecutorTestSuite) TestExecute_GenerateMode_Success_Wi
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), resp)
 	assert.Equal(suite.T(), common.ExecComplete, resp.Status)
-	assert.Equal(suite.T(), "10", resp.RuntimeData[common.RuntimeKeyMagicLinkExpiryMinutes])
+
+	templateData, ok := resp.ForwardedData[common.ForwardedDataKeyTemplateData].(map[string]interface{})
+	assert.True(suite.T(), ok)
+	assert.Equal(suite.T(), "10", templateData["expiryMinutes"])
+
 	suite.mockMagicLinkService.AssertExpectations(suite.T())
 }
 
@@ -417,9 +430,9 @@ func (suite *MagicLinkAuthExecutorTestSuite) TestExecute_GenerateMode_Failure_Cl
 		Return("", clientErr)
 
 	resp, err := suite.executor.Execute(ctx)
-
-	assert.Error(suite.T(), err)
+	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), resp)
+	assert.Equal(suite.T(), common.ExecFailure, resp.Status)
 	suite.mockMagicLinkService.AssertExpectations(suite.T())
 }
 
@@ -561,7 +574,6 @@ func (suite *MagicLinkAuthExecutorTestSuite) TestExecute_VerifyMode_Success_Regi
 	assert.NotNil(suite.T(), resp)
 	assert.Equal(suite.T(), common.ExecComplete, resp.Status)
 	assert.Equal(suite.T(), "jti-registration", resp.RuntimeData[common.RuntimeKeyMagicLinkUsedJti])
-	assert.Equal(suite.T(), magicLinkTestEmail, resp.RuntimeData[userAttributeEmail])
 	suite.mockMagicLinkService.AssertExpectations(suite.T())
 	suite.mockEntityProvider.AssertNotCalled(suite.T(), "GetEntity", mock.Anything)
 }
@@ -574,9 +586,6 @@ func (suite *MagicLinkAuthExecutorTestSuite) TestExecute_VerifyMode_Success_Regi
 		ExecutionID:  magicLinkTestExecutionID,
 		FlowType:     common.FlowTypeRegistration,
 		ExecutorMode: ExecutorModeVerify,
-		NodeProperties: map[string]interface{}{
-			common.NodePropertyRecipientAttribute: "mobileNumber",
-		},
 		UserInputs: map[string]string{
 			userInputMagicLinkToken: testToken,
 		},
@@ -594,7 +603,6 @@ func (suite *MagicLinkAuthExecutorTestSuite) TestExecute_VerifyMode_Success_Regi
 	assert.NotNil(suite.T(), resp)
 	assert.Equal(suite.T(), common.ExecComplete, resp.Status)
 	assert.Equal(suite.T(), "jti-registration", resp.RuntimeData[common.RuntimeKeyMagicLinkUsedJti])
-	assert.Equal(suite.T(), "+1234567890", resp.RuntimeData["mobileNumber"])
 	suite.mockMagicLinkService.AssertExpectations(suite.T())
 	suite.mockEntityProvider.AssertNotCalled(suite.T(), "GetEntity", mock.Anything)
 }
@@ -611,9 +619,6 @@ func (suite *MagicLinkAuthExecutorTestSuite) TestExecute_VerifyMode_Registration
 		ExecutionID:  magicLinkTestExecutionID,
 		FlowType:     common.FlowTypeRegistration,
 		ExecutorMode: ExecutorModeVerify,
-		NodeProperties: map[string]interface{}{
-			common.NodePropertyRecipientAttribute: userAttributeEmail,
-		},
 		UserInputs: map[string]string{
 			userInputMagicLinkToken: testToken,
 		},
@@ -630,8 +635,6 @@ func (suite *MagicLinkAuthExecutorTestSuite) TestExecute_VerifyMode_Registration
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), resp)
 	assert.Equal(suite.T(), common.ExecComplete, resp.Status)
-	assert.Equal(suite.T(), workEmailValue, resp.RuntimeData[workEmailAttr])
-	assert.Empty(suite.T(), resp.RuntimeData[userAttributeEmail])
 	suite.mockMagicLinkService.AssertExpectations(suite.T())
 }
 
@@ -1223,4 +1226,91 @@ func (suite *MagicLinkAuthExecutorTestSuite) TestCreateRegistrationMagicLinkJWT_
 	// Run a basic sanity check to ensure the token is generated successfully
 	suite.NotEmpty(token, "Generated token should not be empty")
 	suite.Contains(token, ".", "Generated token should contain JWT separators")
+}
+
+func (suite *MagicLinkAuthExecutorTestSuite) TestValidateMagicLinkToken_DecodeFailure() {
+	// Pass a completely malformed token string
+	// nolint:gosec // G101: Test data for negative case, not a real credential
+	token := "not.a.valid.jwt.format"
+
+	ctx := &core.NodeContext{
+		Context:     context.Background(),
+		ExecutionID: magicLinkTestExecutionID,
+		UserInputs:  map[string]string{userInputMagicLinkToken: token},
+		RuntimeData: make(map[string]string),
+	}
+
+	suite.mockMagicLinkService.On("VerifyMagicLink", ctx.Context, token, "").Return(
+		&entityprovider.Entity{ID: magicLinkTestUserID}, nil)
+
+	logger := log.GetLogger()
+	userID, tokenJTI, failure, err := suite.executor.validateMagicLinkToken(ctx, logger)
+
+	suite.Empty(userID)
+	suite.Empty(tokenJTI)
+	// Asserts that we gracefully fail with the new unexported constant
+	suite.Equal(failureReasonInvalidMagicLink, failure)
+	suite.Nil(err)
+}
+
+func (suite *MagicLinkAuthExecutorTestSuite) TestValidateMagicLinkToken_MissingJTI() {
+	header := magicLinkTestJWTHeader
+	// Create a payload that is missing the "jti" claim
+	payload := fmt.Sprintf(`{"sub":"user-123","executionId":%q,"exp":9999999999}`, magicLinkTestExecutionID)
+
+	headerB64 := base64.RawURLEncoding.EncodeToString([]byte(header))
+	payloadB64 := base64.RawURLEncoding.EncodeToString([]byte(payload))
+	token := headerB64 + "." + payloadB64 + ".test-signature"
+
+	ctx := &core.NodeContext{
+		Context:     context.Background(),
+		ExecutionID: magicLinkTestExecutionID,
+		UserInputs:  map[string]string{userInputMagicLinkToken: token},
+		RuntimeData: make(map[string]string),
+	}
+
+	suite.mockMagicLinkService.On("VerifyMagicLink", ctx.Context, token, "").Return(
+		&entityprovider.Entity{ID: magicLinkTestUserID}, nil)
+
+	logger := log.GetLogger()
+	userID, tokenJTI, failure, err := suite.executor.validateMagicLinkToken(ctx, logger)
+
+	suite.Empty(userID)
+	suite.Empty(tokenJTI)
+	suite.Equal(failureReasonInvalidMagicLink, failure)
+	suite.Nil(err)
+}
+
+func (suite *MagicLinkAuthExecutorTestSuite) TestValidateMagicLinkToken_RegistrationMissingSubject() {
+	// Create a token that has a JTI and ExecutionID, but is completely missing the "sub" claim
+	header := magicLinkTestJWTHeader
+	payload := fmt.Sprintf(`{"registration":true,"executionId":%q,"jti":"test-jti-123","exp":9999999999}`,
+		magicLinkTestExecutionID)
+
+	headerB64 := base64.RawURLEncoding.EncodeToString([]byte(header))
+	payloadB64 := base64.RawURLEncoding.EncodeToString([]byte(payload))
+	token := headerB64 + "." + payloadB64 + ".test-signature"
+
+	ctx := &core.NodeContext{
+		Context:     context.Background(),
+		ExecutionID: magicLinkTestExecutionID,
+		FlowType:    common.FlowTypeRegistration, // Ensure it hits the registration block
+		UserInputs:  map[string]string{userInputMagicLinkToken: token},
+		RuntimeData: map[string]string{
+			common.RuntimeKeyMagicLinkDestinationAttribute: userAttributeEmail,
+		},
+	}
+
+	// Mock the service to return UserNotFound (which is the expected happy-path for a new registration)
+	suite.mockMagicLinkService.On("VerifyMagicLink", ctx.Context, token, userAttributeEmail).Return(
+		nil, &authncm.ErrorUserNotFound)
+
+	logger := log.GetLogger()
+	userID, tokenJTI, failure, err := suite.executor.validateMagicLinkToken(ctx, logger)
+
+	// Assert that our security check caught the missing subject
+	suite.Empty(userID)
+	suite.Empty(tokenJTI)
+	suite.Equal(failureReasonInvalidMagicLink, failure)
+	suite.Nil(err)
 }

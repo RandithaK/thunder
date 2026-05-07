@@ -158,8 +158,6 @@ const (
 	// NodePropertyOUResolveFrom specifies the strategy for resolving the organization unit.
 	// Supported values: "caller" (use the caller's OU).
 	NodePropertyOUResolveFrom = "resolveFrom"
-	// NodePropertyRecipientAttribute specifies the destination parameter to use for verification (e.g., email, phone).
-	NodePropertyRecipientAttribute = "destinationAttribute"
 )
 
 const (
@@ -219,8 +217,6 @@ const (
 	RuntimeKeySMSOTPPhoneAttr = "smsOTPPhoneAttr"
 	// RuntimeKeyMagicLinkUsedJti is the JWT ID claim value of a magic link token that has already been used.
 	RuntimeKeyMagicLinkUsedJti = "magicLinkUsedJti"
-	// InvalidMagicLinkToken is the error message for invalid magic link tokens.
-	InvalidMagicLinkToken = "Invalid magic link token"
 	// RuntimeKeyOAuthState holds the generated OAuth state parameter for CSRF validation.
 	RuntimeKeyOAuthState = "oauthState"
 )
