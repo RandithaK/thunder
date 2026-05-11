@@ -98,6 +98,7 @@ export const TemplateTypes = {
   BasicWithPrompt: 'BASIC_WITH_PROMPT',
   SelfInvite: 'SELF_INVITE',
   MagicLink: 'MAGIC_LINK',
+  BasicMagicLink: 'BASIC_MAGIC_LINK',
 } as const;
 
 export type TemplateTypes = (typeof TemplateTypes)[keyof typeof TemplateTypes];

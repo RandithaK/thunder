@@ -80,6 +80,7 @@ const TEMPLATE_ICONS: Record<string, string[]> = {
   SELF_INVITE: ['assets/images/icons/email.svg'],
   Email_Link: ['assets/images/icons/email.svg'],
   MAGIC_LINK: ['assets/images/icons/link.svg'],
+  BASIC_MAGIC_LINK: ['assets/images/icons/password.svg', 'assets/images/icons/link.svg'],
   DEFAULT: ['assets/images/icons/user.svg'],
 };
 

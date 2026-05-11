@@ -8333,13 +8333,13 @@
     "flowType": "AUTHENTICATION",
     "display": {
       "label": "Magic Link",
-      "description": "Passwordless sign-in via a one-time magic link sent to the user's email",
+      "description": "Sign in with a magic link sent to your email",
       "image": "assets/images/icons/link.svg",
       "showOnResourcePanel": true
     },
     "config": {
-      "name": "Magic Link Sign-in Flow",
-      "handle": "magic-link-signin-flow",
+      "name": "Magic Link Authentication Flow",
+      "handle": "magic-link-auth-flow",
       "nodes": [
         {
           "id": "start",
@@ -8391,15 +8391,6 @@
                 "variant": "HEADING_1"
               },
               {
-                "align": "center",
-                "category": "DISPLAY",
-                "id": "display_desc",
-                "label": "{{ t(signin:forms.magicLink.description) }}",
-                "resourceType": "ELEMENT",
-                "type": "TEXT",
-                "variant": "BODY_1"
-              },
-              {
                 "category": "BLOCK",
                 "components": [
                   {
@@ -8434,7 +8425,7 @@
             {
               "inputs": [
                 {
-                  "ref": "email",
+                  "ref": "input_001",
                   "identifier": "email",
                   "type": "EMAIL_INPUT",
                   "required": true
@@ -8508,7 +8499,7 @@
               "height": 113
             },
             "position": {
-              "x": 1950,
+              "x": 1430,
               "y": 353
             }
           },
@@ -8527,7 +8518,7 @@
               "height": 113
             },
             "position": {
-              "x": 2280,
+              "x": 1760,
               "y": 353
             }
           },
@@ -8545,7 +8536,998 @@
               "height": 34
             },
             "position": {
-              "x": 2650,
+              "x": 2100,
+              "y": 393
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "resourceType": "TEMPLATE",
+    "category": "PASSWORDLESS",
+    "type": "BASIC_MAGIC_LINK",
+    "flowType": "AUTHENTICATION",
+    "display": {
+      "label": "Basic + Magic Link",
+      "description": "Username/password then magic link sign-in",
+      "image": "assets/images/icons/link.svg",
+      "showOnResourcePanel": true
+    },
+    "config": {
+      "name": "Basic + Magic Link Authentication Flow",
+      "handle": "basic-magic-link-auth-flow",
+      "nodes": [
+        {
+          "id": "start",
+          "type": "START",
+          "layout": {
+            "size": {
+              "width": 101,
+              "height": 34
+            },
+            "position": {
+              "x": 62,
+              "y": 353
+            }
+          },
+          "onSuccess": "prompt_credentials"
+        },
+        {
+          "id": "prompt_credentials",
+          "type": "PROMPT",
+          "layout": {
+            "size": {
+              "width": 350,
+              "height": 680
+            },
+            "position": {
+              "x": 280,
+              "y": 30
+            }
+          },
+          "meta": {
+            "components": [
+              {
+                "alt": "{{ t(signin:images.app_logo.alt) }}",
+                "category": "DISPLAY",
+                "height": "60",
+                "id": "image_logo",
+                "resourceType": "ELEMENT",
+                "src": "{{ meta(application.logoUrl) }}",
+                "type": "IMAGE",
+                "width": ""
+              },
+              {
+                "align": "center",
+                "category": "DISPLAY",
+                "id": "display_heading",
+                "label": "{{ t(signin:forms.choose_auth_method.title) }}",
+                "resourceType": "ELEMENT",
+                "type": "TEXT",
+                "variant": "HEADING_1"
+              },
+              {
+                "category": "BLOCK",
+                "components": [
+                  {
+                    "category": "FIELD",
+                    "hint": "",
+                    "id": "input_001",
+                    "inputType": "text",
+                    "label": "{{ t(signin:forms.choose_auth_method.fields.username.label) }}",
+                    "placeholder": "{{ t(signin:forms.choose_auth_method.fields.username.placeholder) }}",
+                    "ref": "username",
+                    "required": true,
+                    "resourceType": "ELEMENT",
+                    "type": "TEXT_INPUT"
+                  },
+                  {
+                    "category": "FIELD",
+                    "hint": "",
+                    "id": "input_002",
+                    "inputType": "text",
+                    "label": "{{ t(signin:forms.choose_auth_method.fields.password.label) }}",
+                    "placeholder": "{{ t(signin:forms.choose_auth_method.fields.password.placeholder) }}",
+                    "ref": "password",
+                    "required": true,
+                    "resourceType": "ELEMENT",
+                    "type": "PASSWORD_INPUT"
+                  },
+                  {
+                    "category": "ACTION",
+                    "eventType": "SUBMIT",
+                    "id": "action_001",
+                    "label": "{{ t(signin:forms.choose_auth_method.actions.submit.label) }}",
+                    "resourceType": "ELEMENT",
+                    "type": "ACTION",
+                    "variant": "PRIMARY"
+                  }
+                ],
+                "id": "block_001",
+                "resourceType": "ELEMENT",
+                "type": "BLOCK"
+              }
+            ]
+          },
+          "prompts": [
+            {
+              "inputs": [
+                {
+                  "ref": "input_001",
+                  "identifier": "username",
+                  "type": "TEXT_INPUT",
+                  "required": true
+                },
+                {
+                  "ref": "input_002",
+                  "identifier": "password",
+                  "type": "PASSWORD_INPUT",
+                  "required": true
+                }
+              ],
+              "action": {
+                "ref": "action_001",
+                "nextNode": "basic_auth"
+              }
+            }
+          ]
+        },
+        {
+          "id": "basic_auth",
+          "type": "TASK_EXECUTION",
+          "layout": {
+            "size": {
+              "width": 200,
+              "height": 113
+            },
+            "position": {
+              "x": 770,
+              "y": 353
+            }
+          },
+          "executor": {
+            "name": "BasicAuthExecutor"
+          },
+          "onSuccess": "collect_email",
+          "onIncomplete": "prompt_credentials"
+        },
+        {
+          "id": "collect_email",
+          "type": "TASK_EXECUTION",
+          "layout": {
+            "size": {
+              "width": 200,
+              "height": 113
+            },
+            "position": {
+              "x": 1100,
+              "y": 353
+            }
+          },
+          "executor": {
+            "name": "AttributeCollector",
+            "inputs": [
+              {
+                "ref": "input_003",
+                "identifier": "email",
+                "type": "EMAIL_INPUT",
+                "required": false
+              }
+            ]
+          },
+          "onSuccess": "generate_magic_link"
+        },
+        {
+          "id": "generate_magic_link",
+          "type": "TASK_EXECUTION",
+          "layout": {
+            "size": {
+              "width": 200,
+              "height": 113
+            },
+            "position": {
+              "x": 1430,
+              "y": 353
+            }
+          },
+          "properties": {
+            "magicLinkURL": "https://localhost:3000/signin"
+          },
+          "executor": {
+            "name": "MagicLinkExecutor",
+            "mode": "generate",
+            "inputs": [
+              {
+                "ref": "input_magic_link_dest",
+                "identifier": "email",
+                "type": "EMAIL_INPUT",
+                "required": true
+              }
+            ]
+          },
+          "onSuccess": "send_email"
+        },
+        {
+          "id": "send_email",
+          "type": "TASK_EXECUTION",
+          "layout": {
+            "size": {
+              "width": 200,
+              "height": 113
+            },
+            "position": {
+              "x": 1760,
+              "y": 353
+            }
+          },
+          "properties": {
+            "emailTemplate": "MAGIC_LINK"
+          },
+          "executor": {
+            "name": "EmailExecutor",
+            "mode": "send"
+          },
+          "onSuccess": "verify_magic_link"
+        },
+        {
+          "id": "verify_magic_link",
+          "type": "TASK_EXECUTION",
+          "layout": {
+            "size": {
+              "width": 200,
+              "height": 113
+            },
+            "position": {
+              "x": 2090,
+              "y": 353
+            }
+          },
+          "executor": {
+            "name": "MagicLinkExecutor",
+            "mode": "verify"
+          },
+          "onSuccess": "auth_assert"
+        },
+        {
+          "id": "auth_assert",
+          "type": "TASK_EXECUTION",
+          "layout": {
+            "size": {
+              "width": 244,
+              "height": 113
+            },
+            "position": {
+              "x": 2420,
+              "y": 353
+            }
+          },
+          "executor": {
+            "name": "AuthAssertExecutor"
+          },
+          "onSuccess": "end"
+        },
+        {
+          "id": "end",
+          "type": "END",
+          "layout": {
+            "size": {
+              "width": 85,
+              "height": 34
+            },
+            "position": {
+              "x": 2760,
+              "y": 393
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "resourceType": "TEMPLATE",
+    "category": "PASSWORDLESS",
+    "type": "MAGIC_LINK",
+    "flowType": "REGISTRATION",
+    "display": {
+      "label": "Magic Link",
+      "description": "Sign up with a magic link sent to your email",
+      "image": "assets/images/icons/link.svg",
+      "showOnResourcePanel": true
+    },
+    "config": {
+      "name": "Magic Link Registration Flow",
+      "handle": "magic-link-reg-flow",
+      "nodes": [
+        {
+          "id": "start",
+          "type": "START",
+          "layout": {
+            "size": {
+              "width": 101,
+              "height": 34
+            },
+            "position": {
+              "x": 62,
+              "y": 353
+            }
+          },
+          "onSuccess": "user_type_resolver"
+        },
+        {
+          "id": "user_type_resolver",
+          "type": "TASK_EXECUTION",
+          "layout": {
+            "size": {
+              "width": 205,
+              "height": 113
+            },
+            "position": {
+              "x": 298,
+              "y": 314
+            }
+          },
+          "executor": {
+            "name": "UserTypeResolver"
+          },
+          "onSuccess": "prompt_email",
+          "onIncomplete": "prompt_usertype"
+        },
+        {
+          "id": "prompt_usertype",
+          "type": "PROMPT",
+          "layout": {
+            "size": {
+              "width": 350,
+              "height": 627
+            },
+            "position": {
+              "x": 653,
+              "y": -264
+            }
+          },
+          "meta": {
+            "components": [
+              {
+                "alt": "{{ t(signup:images.app_logo.alt) }}",
+                "category": "DISPLAY",
+                "height": "60",
+                "id": "image",
+                "resourceType": "ELEMENT",
+                "src": "{{ meta(application.logoUrl) }}",
+                "type": "IMAGE",
+                "width": ""
+              },
+              {
+                "align": "center",
+                "category": "DISPLAY",
+                "id": "heading_usertype",
+                "label": "{{ t(signup:forms.user_type.title) }}",
+                "resourceType": "ELEMENT",
+                "type": "TEXT",
+                "variant": "HEADING_1"
+              },
+              {
+                "category": "BLOCK",
+                "components": [
+                  {
+                    "category": "FIELD",
+                    "hint": "",
+                    "id": "usertype_input",
+                    "label": "{{ t(signup:forms.user_type.fields.user_type.label) }}",
+                    "options": [],
+                    "placeholder": "{{ t(signup:forms.user_type.fields.user_type.placeholder) }}",
+                    "ref": "userType",
+                    "required": true,
+                    "resourceType": "ELEMENT",
+                    "type": "SELECT"
+                  },
+                  {
+                    "category": "ACTION",
+                    "eventType": "SUBMIT",
+                    "id": "action_usertype",
+                    "label": "{{ t(signup:forms.user_type.actions.continue.label) }}",
+                    "resourceType": "ELEMENT",
+                    "type": "ACTION",
+                    "variant": "PRIMARY"
+                  }
+                ],
+                "id": "block_usertype",
+                "resourceType": "ELEMENT",
+                "type": "BLOCK"
+              }
+            ]
+          },
+          "prompts": [
+            {
+              "action": {
+                "ref": "action_usertype",
+                "nextNode": "user_type_resolver"
+              },
+              "inputs": [
+                {
+                  "ref": "usertype_input",
+                  "identifier": "userType",
+                  "type": "SELECT",
+                  "required": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "prompt_email",
+          "type": "PROMPT",
+          "layout": {
+            "size": {
+              "width": 350,
+              "height": 560
+            },
+            "position": {
+              "x": 653,
+              "y": 87
+            }
+          },
+          "meta": {
+            "components": [
+              {
+                "alt": "{{ t(signup:images.app_logo.alt) }}",
+                "category": "DISPLAY",
+                "height": "60",
+                "id": "image_logo",
+                "resourceType": "ELEMENT",
+                "src": "{{ meta(application.logoUrl) }}",
+                "type": "IMAGE",
+                "width": ""
+              },
+              {
+                "align": "center",
+                "category": "DISPLAY",
+                "id": "display_heading",
+                "label": "{{ t(signup:forms.collect_user_info.title) }}",
+                "resourceType": "ELEMENT",
+                "type": "TEXT",
+                "variant": "HEADING_1"
+              },
+              {
+                "category": "BLOCK",
+                "components": [
+                  {
+                    "category": "FIELD",
+                    "hint": "",
+                    "id": "input_001",
+                    "inputType": "email",
+                    "label": "{{ t(signup:forms.collect_user_info.fields.email.label) }}",
+                    "placeholder": "{{ t(signup:forms.collect_user_info.fields.email.placeholder) }}",
+                    "ref": "email",
+                    "required": true,
+                    "resourceType": "ELEMENT",
+                    "type": "EMAIL_INPUT"
+                  },
+                  {
+                    "category": "ACTION",
+                    "eventType": "SUBMIT",
+                    "id": "magic_link_action",
+                    "label": "{{ t(signup:forms.collect_user_info.actions.submit.label) }}",
+                    "resourceType": "ELEMENT",
+                    "type": "ACTION",
+                    "variant": "PRIMARY"
+                  }
+                ],
+                "id": "block_001",
+                "resourceType": "ELEMENT",
+                "type": "BLOCK"
+              }
+            ]
+          },
+          "prompts": [
+            {
+              "inputs": [
+                {
+                  "ref": "input_001",
+                  "identifier": "email",
+                  "type": "EMAIL_INPUT",
+                  "required": true
+                }
+              ],
+              "action": {
+                "ref": "magic_link_action",
+                "nextNode": "generate_magic_link"
+              }
+            }
+          ]
+        },
+        {
+          "id": "generate_magic_link",
+          "type": "TASK_EXECUTION",
+          "layout": {
+            "size": {
+              "width": 200,
+              "height": 113
+            },
+            "position": {
+              "x": 1153,
+              "y": 353
+            }
+          },
+          "properties": {
+            "magicLinkURL": "https://localhost:3000/signin"
+          },
+          "executor": {
+            "name": "MagicLinkExecutor",
+            "mode": "generate",
+            "inputs": [
+              {
+                "ref": "input_magic_link_dest",
+                "identifier": "email",
+                "type": "EMAIL_INPUT",
+                "required": true
+              }
+            ]
+          },
+          "onSuccess": "send_email"
+        },
+        {
+          "id": "send_email",
+          "type": "TASK_EXECUTION",
+          "layout": {
+            "size": {
+              "width": 200,
+              "height": 113
+            },
+            "position": {
+              "x": 1497,
+              "y": 353
+            }
+          },
+          "properties": {
+            "emailTemplate": "MAGIC_LINK"
+          },
+          "executor": {
+            "name": "EmailExecutor",
+            "mode": "send"
+          },
+          "onSuccess": "verify_magic_link"
+        },
+        {
+          "id": "verify_magic_link",
+          "type": "TASK_EXECUTION",
+          "layout": {
+            "size": {
+              "width": 200,
+              "height": 113
+            },
+            "position": {
+              "x": 1840,
+              "y": 353
+            }
+          },
+          "executor": {
+            "name": "MagicLinkExecutor",
+            "mode": "verify"
+          },
+          "onSuccess": "provisioning"
+        },
+        {
+          "id": "provisioning",
+          "type": "TASK_EXECUTION",
+          "layout": {
+            "size": {
+              "width": 200,
+              "height": 113
+            },
+            "position": {
+              "x": 2183,
+              "y": 353
+            }
+          },
+          "executor": {
+            "name": "ProvisioningExecutor"
+          },
+          "onSuccess": "auth_assert"
+        },
+        {
+          "id": "auth_assert",
+          "type": "TASK_EXECUTION",
+          "layout": {
+            "size": {
+              "width": 244,
+              "height": 113
+            },
+            "position": {
+              "x": 2526,
+              "y": 353
+            }
+          },
+          "executor": {
+            "name": "AuthAssertExecutor"
+          },
+          "onSuccess": "end"
+        },
+        {
+          "id": "end",
+          "type": "END",
+          "layout": {
+            "size": {
+              "width": 85,
+              "height": 34
+            },
+            "position": {
+              "x": 2870,
+              "y": 393
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "resourceType": "TEMPLATE",
+    "category": "PASSWORDLESS",
+    "type": "BASIC_MAGIC_LINK",
+    "flowType": "REGISTRATION",
+    "display": {
+      "label": "Basic + Magic Link",
+      "description": "Register with password and verify with magic link",
+      "image": "assets/images/icons/link.svg",
+      "showOnResourcePanel": true
+    },
+    "config": {
+      "name": "Basic + Magic Link Registration Flow",
+      "handle": "basic-magic-link-reg-flow",
+      "nodes": [
+        {
+          "id": "start",
+          "type": "START",
+          "layout": {
+            "size": {
+              "width": 101,
+              "height": 34
+            },
+            "position": {
+              "x": 62,
+              "y": 353
+            }
+          },
+          "onSuccess": "user_type_resolver"
+        },
+        {
+          "id": "user_type_resolver",
+          "type": "TASK_EXECUTION",
+          "layout": {
+            "size": {
+              "width": 205,
+              "height": 113
+            },
+            "position": {
+              "x": 298,
+              "y": 314
+            }
+          },
+          "executor": {
+            "name": "UserTypeResolver"
+          },
+          "onSuccess": "prompt_credentials",
+          "onIncomplete": "prompt_usertype"
+        },
+        {
+          "id": "prompt_usertype",
+          "type": "PROMPT",
+          "layout": {
+            "size": {
+              "width": 350,
+              "height": 627
+            },
+            "position": {
+              "x": 653,
+              "y": -264
+            }
+          },
+          "meta": {
+            "components": [
+              {
+                "alt": "{{ t(signup:images.app_logo.alt) }}",
+                "category": "DISPLAY",
+                "height": "60",
+                "id": "image",
+                "resourceType": "ELEMENT",
+                "src": "{{ meta(application.logoUrl) }}",
+                "type": "IMAGE",
+                "width": ""
+              },
+              {
+                "align": "center",
+                "category": "DISPLAY",
+                "id": "heading_usertype",
+                "label": "{{ t(signup:forms.user_type.title) }}",
+                "resourceType": "ELEMENT",
+                "type": "TEXT",
+                "variant": "HEADING_1"
+              },
+              {
+                "category": "BLOCK",
+                "components": [
+                  {
+                    "category": "FIELD",
+                    "hint": "",
+                    "id": "usertype_input",
+                    "label": "{{ t(signup:forms.user_type.fields.user_type.label) }}",
+                    "options": [],
+                    "placeholder": "{{ t(signup:forms.user_type.fields.user_type.placeholder) }}",
+                    "ref": "userType",
+                    "required": true,
+                    "resourceType": "ELEMENT",
+                    "type": "SELECT"
+                  },
+                  {
+                    "category": "ACTION",
+                    "eventType": "SUBMIT",
+                    "id": "action_usertype",
+                    "label": "{{ t(signup:forms.user_type.actions.continue.label) }}",
+                    "resourceType": "ELEMENT",
+                    "type": "ACTION",
+                    "variant": "PRIMARY"
+                  }
+                ],
+                "id": "block_usertype",
+                "resourceType": "ELEMENT",
+                "type": "BLOCK"
+              }
+            ]
+          },
+          "prompts": [
+            {
+              "action": {
+                "ref": "action_usertype",
+                "nextNode": "user_type_resolver"
+              },
+              "inputs": [
+                {
+                  "ref": "usertype_input",
+                  "identifier": "userType",
+                  "type": "SELECT",
+                  "required": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "prompt_credentials",
+          "type": "PROMPT",
+          "layout": {
+            "size": {
+              "width": 350,
+              "height": 680
+            },
+            "position": {
+              "x": 653,
+              "y": 30
+            }
+          },
+          "meta": {
+            "components": [
+              {
+                "alt": "{{ t(signup:images.app_logo.alt) }}",
+                "category": "DISPLAY",
+                "height": "60",
+                "id": "image_logo",
+                "resourceType": "ELEMENT",
+                "src": "{{ meta(application.logoUrl) }}",
+                "type": "IMAGE",
+                "width": ""
+              },
+              {
+                "align": "center",
+                "category": "DISPLAY",
+                "id": "display_heading",
+                "label": "{{ t(signup:forms.collect_user_info.title) }}",
+                "resourceType": "ELEMENT",
+                "type": "TEXT",
+                "variant": "HEADING_1"
+              },
+              {
+                "category": "BLOCK",
+                "components": [
+                  {
+                    "category": "FIELD",
+                    "hint": "",
+                    "id": "input_001",
+                    "inputType": "text",
+                    "label": "{{ t(signup:forms.collect_user_info.fields.username.label) }}",
+                    "placeholder": "{{ t(signup:forms.collect_user_info.fields.username.placeholder) }}",
+                    "ref": "username",
+                    "required": true,
+                    "resourceType": "ELEMENT",
+                    "type": "TEXT_INPUT"
+                  },
+                  {
+                    "category": "FIELD",
+                    "hint": "",
+                    "id": "input_002",
+                    "inputType": "email",
+                    "label": "{{ t(signup:forms.collect_user_info.fields.email.label) }}",
+                    "placeholder": "{{ t(signup:forms.collect_user_info.fields.email.placeholder) }}",
+                    "ref": "email",
+                    "required": true,
+                    "resourceType": "ELEMENT",
+                    "type": "EMAIL_INPUT"
+                  },
+                  {
+                    "category": "FIELD",
+                    "hint": "",
+                    "id": "input_003",
+                    "inputType": "text",
+                    "label": "{{ t(signup:forms.collect_user_info.fields.password.label) }}",
+                    "placeholder": "{{ t(signup:forms.collect_user_info.fields.password.placeholder) }}",
+                    "ref": "password",
+                    "required": true,
+                    "resourceType": "ELEMENT",
+                    "type": "PASSWORD_INPUT"
+                  },
+                  {
+                    "category": "ACTION",
+                    "eventType": "SUBMIT",
+                    "id": "action_001",
+                    "label": "{{ t(signup:forms.collect_user_info.actions.submit.label) }}",
+                    "resourceType": "ELEMENT",
+                    "type": "ACTION",
+                    "variant": "PRIMARY"
+                  }
+                ],
+                "id": "block_001",
+                "resourceType": "ELEMENT",
+                "type": "BLOCK"
+              }
+            ]
+          },
+          "prompts": [
+            {
+              "inputs": [
+                {
+                  "ref": "input_001",
+                  "identifier": "username",
+                  "type": "TEXT_INPUT",
+                  "required": true
+                },
+                {
+                  "ref": "input_002",
+                  "identifier": "email",
+                  "type": "EMAIL_INPUT",
+                  "required": true
+                },
+                {
+                  "ref": "input_003",
+                  "identifier": "password",
+                  "type": "PASSWORD_INPUT",
+                  "required": true
+                }
+              ],
+              "action": {
+                "ref": "action_001",
+                "nextNode": "generate_magic_link"
+              }
+            }
+          ]
+        },
+        {
+          "id": "generate_magic_link",
+          "type": "TASK_EXECUTION",
+          "layout": {
+            "size": {
+              "width": 200,
+              "height": 113
+            },
+            "position": {
+              "x": 1153,
+              "y": 353
+            }
+          },
+          "properties": {
+            "magicLinkURL": "https://localhost:3000/signin"
+          },
+          "executor": {
+            "name": "MagicLinkExecutor",
+            "mode": "generate",
+            "inputs": [
+              {
+                "ref": "input_magic_link_dest",
+                "identifier": "email",
+                "type": "EMAIL_INPUT",
+                "required": true
+              }
+            ]
+          },
+          "onSuccess": "send_email"
+        },
+        {
+          "id": "send_email",
+          "type": "TASK_EXECUTION",
+          "layout": {
+            "size": {
+              "width": 200,
+              "height": 113
+            },
+            "position": {
+              "x": 1497,
+              "y": 353
+            }
+          },
+          "properties": {
+            "emailTemplate": "MAGIC_LINK"
+          },
+          "executor": {
+            "name": "EmailExecutor",
+            "mode": "send"
+          },
+          "onSuccess": "verify_magic_link"
+        },
+        {
+          "id": "verify_magic_link",
+          "type": "TASK_EXECUTION",
+          "layout": {
+            "size": {
+              "width": 200,
+              "height": 113
+            },
+            "position": {
+              "x": 1840,
+              "y": 353
+            }
+          },
+          "executor": {
+            "name": "MagicLinkExecutor",
+            "mode": "verify"
+          },
+          "onSuccess": "provisioning"
+        },
+        {
+          "id": "provisioning",
+          "type": "TASK_EXECUTION",
+          "layout": {
+            "size": {
+              "width": 200,
+              "height": 113
+            },
+            "position": {
+              "x": 2183,
+              "y": 353
+            }
+          },
+          "executor": {
+            "name": "ProvisioningExecutor"
+          },
+          "onSuccess": "auth_assert"
+        },
+        {
+          "id": "auth_assert",
+          "type": "TASK_EXECUTION",
+          "layout": {
+            "size": {
+              "width": 244,
+              "height": 113
+            },
+            "position": {
+              "x": 2526,
+              "y": 353
+            }
+          },
+          "executor": {
+            "name": "AuthAssertExecutor"
+          },
+          "onSuccess": "end"
+        },
+        {
+          "id": "end",
+          "type": "END",
+          "layout": {
+            "size": {
+              "width": 85,
+              "height": 34
+            },
+            "position": {
+              "x": 2870,
               "y": 393
             }
           }
