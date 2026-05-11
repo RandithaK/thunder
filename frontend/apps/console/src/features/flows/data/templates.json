@@ -8325,5 +8325,232 @@
         }
       ]
     }
+  },
+  {
+    "resourceType": "TEMPLATE",
+    "category": "PASSWORDLESS",
+    "type": "MAGIC_LINK",
+    "flowType": "AUTHENTICATION",
+    "display": {
+      "label": "Magic Link",
+      "description": "Passwordless sign-in via a one-time magic link sent to the user's email",
+      "image": "assets/images/icons/link.svg",
+      "showOnResourcePanel": true
+    },
+    "config": {
+      "name": "Magic Link Sign-in Flow",
+      "handle": "magic-link-signin-flow",
+      "nodes": [
+        {
+          "id": "start",
+          "type": "START",
+          "layout": {
+            "size": {
+              "width": 101,
+              "height": 34
+            },
+            "position": {
+              "x": 62,
+              "y": 353
+            }
+          },
+          "onSuccess": "prompt_email"
+        },
+        {
+          "id": "prompt_email",
+          "type": "PROMPT",
+          "layout": {
+            "size": {
+              "width": 350,
+              "height": 560
+            },
+            "position": {
+              "x": 280,
+              "y": 87
+            }
+          },
+          "meta": {
+            "components": [
+              {
+                "alt": "{{ t(signin:images.app_logo.alt) }}",
+                "category": "DISPLAY",
+                "height": "60",
+                "id": "image_logo",
+                "resourceType": "ELEMENT",
+                "src": "{{ meta(application.logoUrl) }}",
+                "type": "IMAGE",
+                "width": ""
+              },
+              {
+                "align": "center",
+                "category": "DISPLAY",
+                "id": "display_heading",
+                "label": "{{ t(signin:forms.magicLink.title) }}",
+                "resourceType": "ELEMENT",
+                "type": "TEXT",
+                "variant": "HEADING_1"
+              },
+              {
+                "align": "center",
+                "category": "DISPLAY",
+                "id": "display_desc",
+                "label": "{{ t(signin:forms.magicLink.description) }}",
+                "resourceType": "ELEMENT",
+                "type": "TEXT",
+                "variant": "BODY_1"
+              },
+              {
+                "category": "BLOCK",
+                "components": [
+                  {
+                    "category": "FIELD",
+                    "hint": "",
+                    "id": "input_001",
+                    "inputType": "email",
+                    "label": "{{ t(signin:forms.magicLink.fields.email.label) }}",
+                    "placeholder": "{{ t(signin:forms.magicLink.fields.email.placeholder) }}",
+                    "ref": "email",
+                    "required": true,
+                    "resourceType": "ELEMENT",
+                    "type": "EMAIL_INPUT"
+                  },
+                  {
+                    "category": "ACTION",
+                    "eventType": "SUBMIT",
+                    "id": "magic_link_action",
+                    "label": "{{ t(signin:forms.magicLink.actions.submit.label) }}",
+                    "resourceType": "ELEMENT",
+                    "type": "ACTION",
+                    "variant": "PRIMARY"
+                  }
+                ],
+                "id": "block_001",
+                "resourceType": "ELEMENT",
+                "type": "BLOCK"
+              }
+            ]
+          },
+          "prompts": [
+            {
+              "inputs": [
+                {
+                  "ref": "email",
+                  "identifier": "email",
+                  "type": "EMAIL_INPUT",
+                  "required": true
+                }
+              ],
+              "action": {
+                "ref": "magic_link_action",
+                "nextNode": "generate_magic_link"
+              }
+            }
+          ]
+        },
+        {
+          "id": "generate_magic_link",
+          "type": "TASK_EXECUTION",
+          "layout": {
+            "size": {
+              "width": 200,
+              "height": 113
+            },
+            "position": {
+              "x": 770,
+              "y": 353
+            }
+          },
+          "properties": {
+            "magicLinkURL": "https://localhost:3000/signin"
+          },
+          "executor": {
+            "name": "MagicLinkExecutor",
+            "mode": "generate",
+            "inputs": [
+              {
+                "ref": "input_magic_link_dest",
+                "identifier": "email",
+                "type": "EMAIL_INPUT",
+                "required": true
+              }
+            ]
+          },
+          "onSuccess": "send_email"
+        },
+        {
+          "id": "send_email",
+          "type": "TASK_EXECUTION",
+          "layout": {
+            "size": {
+              "width": 200,
+              "height": 113
+            },
+            "position": {
+              "x": 1100,
+              "y": 353
+            }
+          },
+          "properties": {
+            "emailTemplate": "MAGIC_LINK"
+          },
+          "executor": {
+            "name": "EmailExecutor",
+            "mode": "send"
+          },
+          "onSuccess": "verify_magic_link"
+        },
+        {
+          "id": "verify_magic_link",
+          "type": "TASK_EXECUTION",
+          "layout": {
+            "size": {
+              "width": 200,
+              "height": 113
+            },
+            "position": {
+              "x": 1950,
+              "y": 353
+            }
+          },
+          "executor": {
+            "name": "MagicLinkExecutor",
+            "mode": "verify"
+          },
+          "onSuccess": "auth_assert"
+        },
+        {
+          "id": "auth_assert",
+          "type": "TASK_EXECUTION",
+          "layout": {
+            "size": {
+              "width": 244,
+              "height": 113
+            },
+            "position": {
+              "x": 2280,
+              "y": 353
+            }
+          },
+          "executor": {
+            "name": "AuthAssertExecutor"
+          },
+          "onSuccess": "end"
+        },
+        {
+          "id": "end",
+          "type": "END",
+          "layout": {
+            "size": {
+              "width": 85,
+              "height": 34
+            },
+            "position": {
+              "x": 2650,
+              "y": 393
+            }
+          }
+        }
+      ]
+    }
   }
 ]

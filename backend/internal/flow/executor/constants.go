@@ -22,7 +22,7 @@ package executor
 const (
 	ExecutorNameBasicAuth     = "BasicAuthExecutor"
 	ExecutorNameSMSAuth       = "SMSOTPAuthExecutor"
-	ExecutorNameMagicLinkAuth = "MagicLinkAuthExecutor"
+	ExecutorNameMagicLink = "MagicLinkExecutor"
 	// nolint:gosec // G101: This is an executor name, not a credential
 	ExecutorNamePasskeyAuth                  = "PasskeyAuthExecutor"
 	ExecutorNameOAuth                        = "OAuthExecutor"

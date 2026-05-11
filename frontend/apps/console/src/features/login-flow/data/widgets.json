@@ -1068,5 +1068,134 @@
         ]
       }
     }
+  },
+  {
+    "resourceType": "WIDGET",
+    "category": "COMPOSITE",
+    "type": "MAGIC_LINK",
+    "display": {
+      "label": "Continue with Magic Link",
+      "description": "Authenticate securely using a Magic Link sent via email.",
+      "image": "assets/images/icons/link.svg",
+      "showOnResourcePanel": true
+    },
+    "config": {
+      "data": {
+        "__generationMeta__": {
+          "replacers": [
+            {
+              "key": "EMAIL_VIEW_ID",
+              "type": "ID"
+            },
+            {
+              "key": "MAGIC_GENERATE_EXECUTOR",
+              "type": "ID"
+            },
+            {
+              "key": "EMAIL_SEND_EXECUTOR",
+              "type": "ID"
+            },
+            {
+              "key": "MAGIC_VERIFY_EXECUTOR",
+              "type": "ID"
+            }
+          ]
+        },
+        "steps": [
+          {
+            "__generationMeta__": {
+              "strategy": "MERGE_WITH_DROP_POINT"
+            },
+            "type": "VIEW",
+            "data": {
+              "components": [
+                {
+                  "id": "{{ID}}",
+                  "category": "DISPLAY",
+                  "type": "TEXT",
+                  "variant": "HEADING_3",
+                  "label": "Login with Magic Link"
+                },
+                {
+                  "category": "BLOCK",
+                  "type": "BLOCK",
+                  "id": "{{ID}}",
+                  "components": [
+                    {
+                      "id": "{{ID}}",
+                      "category": "FIELD",
+                      "type": "EMAIL_INPUT",
+                      "inputType": "email",
+                      "hint": "",
+                      "label": "Email",
+                      "required": true,
+                      "placeholder": "Enter your email address",
+                      "ref": "email"
+                    },
+                    {
+                      "id": "{{ID}}",
+                      "category": "ACTION",
+                      "type": "ACTION",
+                      "variant": "PRIMARY",
+                      "eventType": "SUBMIT",
+                      "label": "Send Magic Link",
+                      "action": {
+                        "type": "NEXT",
+                        "onSuccess": "{{MAGIC_GENERATE_EXECUTOR}}"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "id": "{{MAGIC_GENERATE_EXECUTOR}}",
+            "type": "TASK_EXECUTION",
+            "data": {
+              "action": {
+                "type": "EXECUTOR",
+                "executor": {
+                  "name": "MagicLinkExecutor",
+                  "mode": "generate"
+                },
+                "onSuccess": "{{EMAIL_SEND_EXECUTOR}}"
+              }
+            }
+          },
+          {
+            "id": "{{EMAIL_SEND_EXECUTOR}}",
+            "type": "TASK_EXECUTION",
+            "data": {
+              "action": {
+                "type": "EXECUTOR",
+                "executor": {
+                  "name": "EmailExecutor",
+                  "mode": "send"
+                },
+                "onSuccess": "{{MAGIC_VERIFY_EXECUTOR}}"
+              },
+              "properties": {
+                "emailTemplate": "MAGIC_LINK"
+              }
+            }
+          },
+          {
+            "id": "{{MAGIC_VERIFY_EXECUTOR}}",
+            "type": "TASK_EXECUTION",
+            "data": {
+              "action": {
+                "type": "EXECUTOR",
+                "executor": {
+                  "name": "MagicLinkExecutor",
+                  "mode": "verify"
+                },
+                "onSuccess": "{{AUTH_ASSERT_EXECUTOR_ID}}"
+              }
+            }
+          }
+        ]
+      }
+    }
   }
 ]
