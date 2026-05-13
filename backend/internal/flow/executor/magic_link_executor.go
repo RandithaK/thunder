@@ -108,6 +108,20 @@ func (m *magicLinkAuthExecutor) Execute(ctx *core.NodeContext) (*common.Executor
 	}
 }
 
+// GetExecutionPolicy returns the execution policy for the given mode.
+// The verify mode skips challenge token validation because the magic link is opened
+// in a new browser tab that has no challengeToken from the original sign-in session.
+// This mirrors the pattern used by inviteExecutor.
+func (m *magicLinkAuthExecutor) GetExecutionPolicy(mode string) *core.ExecutionPolicy {
+	if mode == ExecutorModeVerify {
+		return &core.ExecutionPolicy{
+			SkipChallengeValidation: true,
+			AllowSegmentRestart:     true,
+		}
+	}
+	return nil
+}
+
 // executeGenerate handles the generation of the magic link
 func (m *magicLinkAuthExecutor) executeGenerate(ctx *core.NodeContext) (*common.ExecutorResponse, error) {
 	logger := m.logger.With(log.String(log.LoggerKeyExecutionID, ctx.ExecutionID))
@@ -177,7 +191,7 @@ func (m *magicLinkAuthExecutor) InitiateMagicLink(ctx *core.NodeContext,
 	magicLinkURL := m.getMagicLinkURL(ctx)
 
 	generatedURL, svcErr := m.magicLinkService.GenerateMagicLink(
-		ctx.Context, subject, expirySeconds, map[string]string{"id": ctx.ExecutionID}, claims, magicLinkURL)
+		ctx.Context, subject, expirySeconds, map[string]string{"executionId": ctx.ExecutionID}, claims, magicLinkURL)
 
 	if svcErr != nil {
 		if svcErr.Type == serviceerror.ClientErrorType {
