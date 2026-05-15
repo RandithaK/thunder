@@ -190,8 +190,13 @@ func (m *magicLinkAuthExecutor) InitiateMagicLink(ctx *core.NodeContext,
 	expirySeconds := m.getTokenExpiry(ctx)
 	magicLinkURL := m.getMagicLinkURL(ctx)
 
+	queryParams := map[string]string{
+		"executionId":   ctx.ExecutionID,
+		"applicationId": ctx.Application.ID,
+	}
+
 	generatedURL, svcErr := m.magicLinkService.GenerateMagicLink(
-		ctx.Context, subject, expirySeconds, map[string]string{"executionId": ctx.ExecutionID}, claims, magicLinkURL)
+		ctx.Context, subject, expirySeconds, queryParams, claims, magicLinkURL)
 
 	if svcErr != nil {
 		if svcErr.Type == serviceerror.ClientErrorType {
