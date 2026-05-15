@@ -9693,8 +9693,22 @@
               }
             ]
           },
-          "prompts": [],
-          "onSuccess": "verify_magic_link"
+          "prompts": [
+            {
+              "inputs": [
+                {
+                  "ref": "magic_link_token_input",
+                  "identifier": "token",
+                  "type": "HIDDEN",
+                  "required": true
+                }
+              ],
+              "action": {
+                "ref": "magic_link_action",
+                "nextNode": "verify_magic_link"
+              }
+            }
+          ]
         },
         {
           "id": "verify_magic_link",
