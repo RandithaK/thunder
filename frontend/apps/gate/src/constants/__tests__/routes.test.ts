@@ -62,6 +62,7 @@ describe('ROUTES', () => {
         INVITE: '/invite',
         CALLBACK: '/callback',
         RECOVERY: '/recovery',
+        MAGIC_LINK: '/magiclink',
       },
     };
     expect(routes.ROOT).toBe('/');

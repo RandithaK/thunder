@@ -72,12 +72,13 @@ type ServerConfig struct {
 
 // GateClientConfig holds the client configuration details.
 type GateClientConfig struct {
-	Hostname  string `yaml:"hostname" json:"hostname"`
-	Port      int    `yaml:"port" json:"port"`
-	Scheme    string `yaml:"scheme" json:"scheme"`
-	Path      string `yaml:"path" json:"path"`
-	LoginPath string `yaml:"login_path" json:"login_path"`
-	ErrorPath string `yaml:"error_path" json:"error_path"`
+	Hostname      string `yaml:"hostname" json:"hostname"`
+	Port          int    `yaml:"port" json:"port"`
+	Scheme        string `yaml:"scheme" json:"scheme"`
+	Path          string `yaml:"path" json:"path"`
+	LoginPath     string `yaml:"login_path" json:"login_path"`
+	ErrorPath     string `yaml:"error_path" json:"error_path"`
+	MagicLinkPath string `yaml:"magic_link_path" json:"magic_link_path"`
 }
 
 // TLSConfig holds the TLS configuration details.
@@ -751,6 +752,9 @@ func LoadConfig(configPath string, defaultPath string, serverHome string) (*Conf
 		}
 		if cfg.GateClient.ErrorPath == "" {
 			cfg.GateClient.ErrorPath = urlpath.Join(cfg.GateClient.Path, "error")
+		}
+		if cfg.GateClient.MagicLinkPath == "" {
+			cfg.GateClient.MagicLinkPath = urlpath.Join(cfg.GateClient.Path, "magiclink")
 		}
 	}
 

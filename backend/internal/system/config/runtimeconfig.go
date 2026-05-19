@@ -30,9 +30,10 @@ import (
 
 // ServerRuntime holds the runtime configuration for the server.
 type ServerRuntime struct {
-	ServerHome         string `yaml:"server_home"`
-	GateClientLoginURL *url.URL
-	Config             Config `yaml:"config"`
+	ServerHome             string `yaml:"server_home"`
+	GateClientLoginURL     *url.URL
+	GateClientMagicLinkURL *url.URL
+	Config                 Config `yaml:"config"`
 }
 
 var (
@@ -46,6 +47,10 @@ func InitializeServerRuntime(serverHome string, config *Config) error {
 		loginPath := config.GateClient.LoginPath
 		if strings.TrimSpace(loginPath) == "" {
 			loginPath = "/signin"
+		}
+		magicLinkPath := config.GateClient.MagicLinkPath
+		if strings.TrimSpace(magicLinkPath) == "" {
+			magicLinkPath = "/magiclink"
 		}
 
 		portStr := strconv.Itoa(config.GateClient.Port)
@@ -66,12 +71,24 @@ func InitializeServerRuntime(serverHome string, config *Config) error {
 			parsedPath = &url.URL{Path: "/signin"}
 		}
 
+		parsedMagicLinkPath, err := url.Parse(magicLinkPath)
+		if err != nil || parsedMagicLinkPath == nil {
+			log.GetLogger().Warn(
+				"Invalid gate client magic link path configured. Falling back to default '/magiclink'",
+				log.String("configuredPath", magicLinkPath),
+				log.Error(err),
+			)
+			parsedMagicLinkPath = &url.URL{Path: "/magiclink"}
+		}
+
 		parsedURL := baseURL.ResolveReference(parsedPath)
+		parsedMagicLinkURL := baseURL.ResolveReference(parsedMagicLinkPath)
 
 		runtimeConfig = &ServerRuntime{
-			ServerHome:         serverHome,
-			GateClientLoginURL: parsedURL,
-			Config:             *config,
+			ServerHome:             serverHome,
+			GateClientLoginURL:     parsedURL,
+			GateClientMagicLinkURL: parsedMagicLinkURL,
+			Config:                 *config,
 		}
 	})
 	return nil

@@ -66,6 +66,7 @@ const appRoutes: AppRoute[] = [
       {path: ROUTES.AUTH.SIGN_UP, element: <SignUpPage />},
       {path: ROUTES.AUTH.INVITE, element: <AcceptInvitePage />},
       {path: ROUTES.AUTH.RECOVERY, element: <RecoveryPage />},
+      {path: ROUTES.AUTH.MAGIC_LINK, element: <MagicLinkCallback signInPath={ROUTES.AUTH.SIGN_IN} />},
       {path: ROUTES.AUTH.CALLBACK, element: <CallbackRoute />},
       {path: ROUTES.AUTH.ERROR, element: <ErrorPage />},
     ],

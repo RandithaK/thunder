@@ -196,7 +196,7 @@ func (s *magicLinkAuthnService) buildMagicLinkURL(magicLinkURL string, token str
 	}
 
 	if u == nil {
-		u = config.GetServerRuntime().GateClientLoginURL
+		u = config.GetServerRuntime().GateClientMagicLinkURL
 	}
 
 	q := u.Query()

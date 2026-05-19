@@ -84,10 +84,11 @@ func initializeTestRuntime(root string) error {
 			Issuer: "magiclink-svc",
 		},
 		GateClient: config.GateClientConfig{
-			Hostname:  "localhost",
-			Port:      8090,
-			Scheme:    "https",
-			LoginPath: "/gate/signin",
+			Hostname:      "localhost",
+			Port:          8090,
+			Scheme:        "https",
+			LoginPath:     "/gate/signin",
+			MagicLinkPath: "/gate/magiclink",
 		},
 	}
 	return config.InitializeServerRuntime(root, testConfig)
@@ -324,7 +325,7 @@ func (suite *MagicLinkServiceTestSuite) TestBuildMagicLinkURLUsesQueryParams() {
 	parsedURL, err := url.Parse(result)
 
 	suite.Require().NoError(err)
-	suite.Equal("/gate/signin", parsedURL.Path)
+	suite.Equal("/gate/magiclink", parsedURL.Path)
 	suite.Equal(testExecutionID, parsedURL.Query().Get("id"))
 	suite.Equal(testToken, parsedURL.Query().Get("token"))
 }
