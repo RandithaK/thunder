@@ -23,4 +23,9 @@ describe('@thunderid/react-router', () => {
     const {ProtectedRoute} = await import('../index');
     expect(ProtectedRoute).toBeDefined();
   });
+
+  it('should export MagicLinkRoute', async () => {
+    const {MagicLinkRoute} = await import('../index');
+    expect(MagicLinkRoute).toBeDefined();
+  });
 });

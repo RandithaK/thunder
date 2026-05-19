@@ -16,7 +16,7 @@
  * under the License.
  */
 
-import {CallbackRoute} from '@thunderid/react-router';
+import {CallbackRoute, MagicLinkRoute} from '@thunderid/react-router';
 import {Navigate, type RouteProps} from 'react-router';
 import ROUTES from '../constants/routes';
 import DefaultLayout from '../layouts/DefaultLayout';
@@ -66,7 +66,7 @@ const appRoutes: AppRoute[] = [
       {path: ROUTES.AUTH.SIGN_UP, element: <SignUpPage />},
       {path: ROUTES.AUTH.INVITE, element: <AcceptInvitePage />},
       {path: ROUTES.AUTH.RECOVERY, element: <RecoveryPage />},
-      {path: ROUTES.AUTH.MAGIC_LINK, element: <MagicLinkCallback signInPath={ROUTES.AUTH.SIGN_IN} />},
+      {path: ROUTES.AUTH.MAGIC_LINK, element: <MagicLinkRoute signInPath={ROUTES.AUTH.SIGN_IN} />},
       {path: ROUTES.AUTH.CALLBACK, element: <CallbackRoute />},
       {path: ROUTES.AUTH.ERROR, element: <ErrorPage />},
     ],

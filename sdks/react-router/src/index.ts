@@ -21,3 +21,6 @@ export * from './components/ProtectedRoute';
 
 export {default as CallbackRoute} from './components/CallbackRoute';
 export * from './components/CallbackRoute';
+
+export {default as MagicLinkRoute} from './components/MagicLinkRoute';
+export * from './components/MagicLinkRoute';
