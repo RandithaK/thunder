@@ -309,6 +309,18 @@ func (as *authorizeService) handleStandardAuthorizationRequest(
 func (as *authorizeService) initiateFlowAndStoreRequest(
 	ctx context.Context, oauthParams *oauth2model.OAuthParameters, app *inboundmodel.OAuthClient,
 ) (*AuthorizationInitResult, *AuthorizationError) {
+	authID, uuidErr := utils.GenerateUUIDv7()
+	if uuidErr != nil {
+		as.logger.Error("Failed to generate UUID for auth request", log.Error(uuidErr))
+		return nil, &AuthorizationError{
+			Code:              oauth2const.ErrorServerError,
+			Message:           "Failed to process authorization request",
+			SendErrorToClient: true,
+			ClientRedirectURI: oauthParams.RedirectURI,
+			State:             oauthParams.State,
+		}
+	}
+
 	effectiveAcrValues := requestvalidator.ResolveACRValues(oauthParams.AcrValues, app.AcrValues)
 	essentialAttributes, optionalAttributes := getRequiredAttributes(
 		oauthParams.StandardScopes, oauthParams.ClaimsRequest, oauthParams.ResponseType, app)
@@ -321,6 +333,7 @@ func (as *authorizeService) initiateFlowAndStoreRequest(
 		flowcm.RuntimeKeyRequiredOptionalAttributes:    optionalAttributes,
 		flowcm.RuntimeKeyRequiredLocales:               oauthParams.ClaimsLocales,
 		flowcm.RuntimeKeyUserAttributesCacheTTLSeconds: fmt.Sprintf("%d", resolveUserAttributesCacheTTL(app)),
+		flowcm.RuntimeKeyAuthID:                        authID,
 	}
 	if effectiveAcrValues != "" {
 		runtimeData[flowcm.RuntimeKeyRequestedAuthClasses] = effectiveAcrValues
@@ -345,6 +358,7 @@ func (as *authorizeService) initiateFlowAndStoreRequest(
 	}
 
 	authRequestCtx := authRequestContext{
+		AuthID:          authID,
 		OAuthParameters: *oauthParams,
 	}
 

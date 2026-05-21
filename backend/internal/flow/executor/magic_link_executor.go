@@ -194,6 +194,9 @@ func (m *magicLinkAuthExecutor) InitiateMagicLink(ctx *core.NodeContext,
 		"executionId":   ctx.ExecutionID,
 		"applicationId": ctx.Application.ID,
 	}
+	if authID, ok := ctx.RuntimeData[common.RuntimeKeyAuthID]; ok && authID != "" {
+		queryParams["authId"] = authID
+	}
 
 	generatedURL, svcErr := m.magicLinkService.GenerateMagicLink(
 		ctx.Context, subject, expirySeconds, queryParams, claims, magicLinkURL)

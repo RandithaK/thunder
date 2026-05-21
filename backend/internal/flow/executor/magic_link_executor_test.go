@@ -201,6 +201,47 @@ func (suite *MagicLinkExecutorTestSuite) TestExecute_GenerateMode_Success_Authen
 	suite.mockMagicLinkService.AssertExpectations(suite.T())
 }
 
+func (suite *MagicLinkExecutorTestSuite) TestExecute_GenerateMode_Success_WithAuthID() {
+	ctx := &core.NodeContext{
+		Context:      context.Background(),
+		ExecutionID:  magicLinkTestExecutionID,
+		FlowType:     common.FlowTypeAuthentication,
+		ExecutorMode: ExecutorModeGenerate,
+		Application:  appmodel.Application{ID: magicLinkTestAppID},
+		UserInputs: map[string]string{
+			userAttributeEmail: magicLinkTestEmail,
+		},
+		RuntimeData: map[string]string{
+			common.RuntimeKeyAuthID: "test-auth-id",
+		},
+	}
+
+	suite.mockEntityProvider.On("IdentifyEntity", map[string]interface{}{
+		userAttributeEmail: magicLinkTestEmail,
+	}).Return(new(magicLinkTestUserID), nil)
+
+	suite.mockMagicLinkService.On("GenerateMagicLink", ctx.Context, magicLinkTestUserID,
+		defaultExpiryMatcher(), map[string]string{
+			"executionId":   magicLinkTestExecutionID,
+			"applicationId": magicLinkTestAppID,
+			"authId":        "test-auth-id",
+		},
+		map[string]interface{}{"executionId": magicLinkTestExecutionID}, "").Return(
+		"https://example.com/verify?id=flow-123&token=jwt-token-123&authId=test-auth-id", nil)
+
+	resp, err := suite.executor.Execute(ctx)
+
+	assert.NoError(suite.T(), err)
+	assert.NotNil(suite.T(), resp)
+	assert.Equal(suite.T(), common.ExecComplete, resp.Status)
+	templateData, ok := resp.ForwardedData[common.ForwardedDataKeyTemplateData].(map[string]interface{})
+	assert.True(suite.T(), ok, "Template data should be present in ForwardedData")
+	expectedURL := "https://example.com/verify?id=flow-123&token=jwt-token-123&authId=test-auth-id"
+	assert.Equal(suite.T(), expectedURL, templateData["magicLink"])
+	suite.mockEntityProvider.AssertExpectations(suite.T())
+	suite.mockMagicLinkService.AssertExpectations(suite.T())
+}
+
 func (suite *MagicLinkExecutorTestSuite) TestExecute_GenerateMode_Success_RegistrationFlow_NewUser() {
 	ctx := &core.NodeContext{
 		Context:      context.Background(),
