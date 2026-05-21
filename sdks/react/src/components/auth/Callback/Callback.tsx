@@ -17,7 +17,9 @@
  */
 
 import {navigate as browserNavigate} from '@thunderid/browser';
-import {FC, useEffect, useRef} from 'react';
+import {FC, useEffect, useRef, useContext} from 'react';
+import ThunderIDContext from '../../../contexts/ThunderID/ThunderIDContext';
+import {getStorage} from '../../../utils/storage';
 
 /**
  * Props for Callback component
@@ -55,6 +57,8 @@ export interface CallbackProps {
 export const Callback: FC<CallbackProps> = ({onNavigate, onError}: CallbackProps) => {
   // Prevent double execution in React Strict Mode
   const processingRef: any = useRef(false);
+  const context = useContext(ThunderIDContext);
+  const storage = context?.storage || 'sessionStorage';
 
   // Resolve navigation: use provided onNavigate (router-aware) or fall back to browser navigate utility
   const navigate = (path: string): void => {
@@ -98,7 +102,7 @@ export const Callback: FC<CallbackProps> = ({onNavigate, onError}: CallbackProps
           throw new Error('Missing OAuth state parameter - possible security issue');
         }
 
-        const storedData: string | null = sessionStorage.getItem(`thunderid_oauth_${state}`);
+        const storedData: string | null = getStorage(storage).getItem(`thunderid_oauth_${state}`);
         if (!storedData) {
           // If state not found, might be an error callback - try to handle gracefully
           if (oauthError) {
@@ -124,12 +128,12 @@ export const Callback: FC<CallbackProps> = ({onNavigate, onError}: CallbackProps
         // 3. Validate state freshness
         const MAX_STATE_AGE = 600000; // 10 minutes
         if (Date.now() - timestamp > MAX_STATE_AGE) {
-          sessionStorage.removeItem(`thunderid_oauth_${state}`);
+          getStorage(storage).removeItem(`thunderid_oauth_${state}`);
           throw new Error('OAuth state expired - please try again');
         }
 
         // 4. Clean up state
-        sessionStorage.removeItem(`thunderid_oauth_${state}`);
+        getStorage(storage).removeItem(`thunderid_oauth_${state}`);
 
         // 5. Handle OAuth error response
         if (oauthError) {

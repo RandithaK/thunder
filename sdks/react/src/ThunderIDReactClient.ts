@@ -45,11 +45,14 @@ import {
 import getAllOrganizations from './api/getAllOrganizations';
 import getMeOrganizations from './api/getMeOrganizations';
 import {ThunderIDReactConfig} from './models/config';
+import {getStorage} from './utils/storage';
 
 class ThunderIDReactClient<T extends ThunderIDReactConfig = ThunderIDReactConfig> extends ThunderIDBrowserClient<T> {
   private loadingState = false;
 
   private _initializeConfig: ThunderIDReactConfig | undefined;
+
+  private _storageType = 'sessionStorage';
 
   constructor(instanceId = 0) {
     super(instanceId);
@@ -76,6 +79,10 @@ class ThunderIDReactClient<T extends ThunderIDReactConfig = ThunderIDReactConfig
       resolvedOrganizationHandle = deriveOrganizationHandleFromBaseUrl(config?.baseUrl);
     }
 
+    if (config?.storage) {
+      this._storageType = config.storage;
+    }
+
     return this.withLoading(async () => {
       this._initializeConfig = {
         ...config,
@@ -89,6 +96,9 @@ class ThunderIDReactClient<T extends ThunderIDReactConfig = ThunderIDReactConfig
   }
 
   override reInitialize(config: Partial<ThunderIDReactConfig>): Promise<boolean> {
+    if (config?.storage) {
+      this._storageType = config.storage;
+    }
     return this.withLoading(async () => {
       let isInitialized: boolean;
 
@@ -277,7 +287,7 @@ class ThunderIDReactClient<T extends ThunderIDReactConfig = ThunderIDReactConfig
         ('executionId' in arg1 || 'applicationId' in arg1)
       ) {
         const authIdFromUrl: string = new URL(window.location.href).searchParams.get('authId') ?? '';
-        const authIdFromStorage: string = sessionStorage.getItem('thunderid_auth_id') ?? '';
+        const authIdFromStorage: string = getStorage(config?.storage || this._storageType).getItem('thunderid_auth_id') ?? '';
         const authId: string = authIdFromUrl || authIdFromStorage;
         const baseUrl: string = config?.baseUrl ?? '';
 
@@ -340,12 +350,13 @@ class ThunderIDReactClient<T extends ThunderIDReactConfig = ThunderIDReactConfig
     const firstArg: any = args[0];
     const baseUrl: string = config?.baseUrl ?? '';
 
+    const storageType = config?.storage || this._storageType;
     const authIdFromUrl: string = new URL(window.location.href).searchParams.get('authId') ?? '';
-    const authIdFromStorage: string = sessionStorage.getItem('thunderid_auth_id') ?? '';
+    const authIdFromStorage: string = getStorage(storageType).getItem('thunderid_auth_id') ?? '';
     const authId: string = authIdFromUrl || authIdFromStorage;
 
     if (authIdFromUrl && !authIdFromStorage) {
-      sessionStorage.setItem('thunderid_auth_id', authIdFromUrl);
+      getStorage(storageType).setItem('thunderid_auth_id', authIdFromUrl);
     }
 
     return executeEmbeddedSignUpFlowV2({

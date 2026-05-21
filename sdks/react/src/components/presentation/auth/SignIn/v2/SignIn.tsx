@@ -36,6 +36,7 @@ import useTranslation from '../../../../../hooks/useTranslation';
 import {useOAuthCallback} from '../../../../../hooks/v2/useOAuthCallback';
 import {initiateOAuthRedirect} from '../../../../../utils/oauth';
 import {normalizeFlowResponse} from '../../../../../utils/v2/flowTransformer';
+import {getStorage} from '../../../../../utils/storage';
 import {handlePasskeyAuthentication, handlePasskeyRegistration} from '../../../../../utils/v2/passkey';
 
 /**
@@ -217,7 +218,7 @@ const SignIn: FC<SignInProps> = ({
   variant,
   children,
 }: SignInProps): ReactElement => {
-  const {applicationId, afterSignInUrl, signIn, isInitialized, isLoading, meta, getStorageManager} = useThunderID();
+  const {applicationId, afterSignInUrl, signIn, isInitialized, isLoading, meta, getStorageManager, storage} = useThunderID();
   const {t} = useTranslation(preferences?.i18n);
 
   // State management for the flow
@@ -248,9 +249,9 @@ const SignIn: FC<SignInProps> = ({
   const setExecutionId = (executionId: string | null): void => {
     setCurrentExecutionId(executionId);
     if (executionId) {
-      sessionStorage.setItem('thunderid_execution_id', executionId);
+      getStorage(storage).setItem('thunderid_execution_id', executionId);
     } else {
-      sessionStorage.removeItem('thunderid_execution_id');
+      getStorage(storage).removeItem('thunderid_execution_id');
     }
   };
 
@@ -301,7 +302,7 @@ const SignIn: FC<SignInProps> = ({
     setExecutionId(null);
     await setChallengeToken(null);
     setIsFlowInitialized(false);
-    sessionStorage.removeItem('thunderid_auth_id');
+    getStorage(storage).removeItem('thunderid_auth_id');
     setIsTimeoutDisabled(false);
     // Reset refs to allow new flows to start properly
     oauthCodeProcessedRef.current = false;
@@ -330,7 +331,7 @@ const SignIn: FC<SignInProps> = ({
    */
   const handleAuthId = (authId: string | null): void => {
     if (authId) {
-      sessionStorage.setItem('thunderid_auth_id', authId);
+      getStorage(storage).setItem('thunderid_auth_id', authId);
     }
   };
 
@@ -712,8 +713,8 @@ const SignIn: FC<SignInProps> = ({
         setExecutionId(null);
         await setChallengeToken(null);
         setIsFlowInitialized(false);
-        sessionStorage.removeItem('thunderid_execution_id');
-        sessionStorage.removeItem('thunderid_auth_id');
+        getStorage(storage).removeItem('thunderid_execution_id');
+        getStorage(storage).removeItem('thunderid_auth_id');
 
         // Clean up OAuth URL params before redirect
         cleanupOAuthUrlParams(true);

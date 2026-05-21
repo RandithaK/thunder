@@ -23,6 +23,7 @@ import {
 import type {EmbeddedSignInFlowResponseV2} from '@thunderid/browser';
 import {FC, useEffect, useRef} from 'react';
 import useThunderID from '../../../contexts/ThunderID/useThunderID';
+import {getStorage} from '../../../utils/storage';
 
 export interface MagicLinkCallbackProps {
   onError?: (error: Error) => void;
@@ -38,7 +39,7 @@ export const MagicLinkCallback: FC<MagicLinkCallbackProps> = ({
   signInPath = '/signin',
 }: MagicLinkCallbackProps) => {
   const processingRef: any = useRef(false);
-  const {isInitialized, isLoading, signIn} = useThunderID();
+  const {isInitialized, isLoading, signIn, storage} = useThunderID();
 
   const navigate = (path: string): void => {
     if (onNavigate) {
@@ -63,7 +64,7 @@ export const MagicLinkCallback: FC<MagicLinkCallbackProps> = ({
   const initiateOAuthRedirect = (redirectURL: string): void => {
     const state: string = crypto.randomUUID();
 
-    sessionStorage.setItem(
+    getStorage(storage).setItem(
       `thunderid_oauth_${state}`,
       JSON.stringify({
         path: signInPath,
@@ -90,7 +91,7 @@ export const MagicLinkCallback: FC<MagicLinkCallbackProps> = ({
   };
 
   const redirectWithError = (error: Error): void => {
-    sessionStorage.removeItem('thunderid_execution_id');
+    getStorage(storage).removeItem('thunderid_execution_id');
 
     onError?.(error);
 
@@ -131,7 +132,7 @@ export const MagicLinkCallback: FC<MagicLinkCallbackProps> = ({
           const redirectURL: string | undefined = (response.data as any)?.redirectURL || (response as any)?.redirectURL;
           const nextExecutionId: string = response.executionId || executionId;
 
-          sessionStorage.setItem('thunderid_execution_id', nextExecutionId);
+          getStorage(storage).setItem('thunderid_execution_id', nextExecutionId);
 
           if (redirectURL) {
             initiateOAuthRedirect(redirectURL);
@@ -142,8 +143,8 @@ export const MagicLinkCallback: FC<MagicLinkCallbackProps> = ({
         if (response.flowStatus === EmbeddedSignInFlowStatusV2.Complete) {
           const redirectUrl: string | undefined = (response as any)?.redirectUrl || (response as any)?.redirect_uri;
 
-          sessionStorage.removeItem('thunderid_execution_id');
-          sessionStorage.removeItem('thunderid_auth_id');
+          getStorage(storage).removeItem('thunderid_execution_id');
+          getStorage(storage).removeItem('thunderid_auth_id');
 
           onSuccess?.({
             redirectUrl,
@@ -165,7 +166,7 @@ export const MagicLinkCallback: FC<MagicLinkCallbackProps> = ({
         }
 
         const nextExecutionId: string = response.executionId || executionId;
-        sessionStorage.setItem('thunderid_execution_id', nextExecutionId);
+        getStorage(storage).setItem('thunderid_execution_id', nextExecutionId);
         navigate(buildSignInPath(nextExecutionId, applicationId));
       } catch (err) {
         const error: Error = err instanceof Error ? err : new Error('Magic Link callback processing failed');
@@ -176,7 +177,7 @@ export const MagicLinkCallback: FC<MagicLinkCallbackProps> = ({
     };
 
     processMagicLink();
-  }, [isInitialized, isLoading, onError, onNavigate, onSuccess, signIn, signInPath]);
+  }, [isInitialized, isLoading, onError, onNavigate, onSuccess, signIn, signInPath, storage]);
 
   return null;
 };
