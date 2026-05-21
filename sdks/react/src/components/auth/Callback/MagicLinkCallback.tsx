@@ -38,7 +38,7 @@ export const MagicLinkCallback: FC<MagicLinkCallbackProps> = ({
   signInPath = '/signin',
 }: MagicLinkCallbackProps) => {
   const processingRef: any = useRef(false);
-  const {afterSignInUrl, getStorageManager, isInitialized, isLoading, signIn} = useThunderID();
+  const {isInitialized, isLoading, signIn} = useThunderID();
 
   const navigate = (path: string): void => {
     if (onNavigate) {
@@ -58,22 +58,7 @@ export const MagicLinkCallback: FC<MagicLinkCallbackProps> = ({
     window.history.replaceState({}, '', url.toString());
   };
 
-  const setChallengeToken = async (challengeToken: string | null): Promise<void> => {
-    try {
-      const storageManager: any = await getStorageManager();
-      if (!storageManager) {
-        return;
-      }
 
-      if (challengeToken) {
-        await storageManager.setTemporaryDataParameter('challengeToken', challengeToken);
-      } else {
-        await storageManager.removeTemporaryDataParameter('challengeToken');
-      }
-    } catch {
-      // Storage is best-effort here; verification outcome should drive navigation.
-    }
-  };
 
   const initiateOAuthRedirect = (redirectURL: string): void => {
     const state: string = crypto.randomUUID();
@@ -104,9 +89,8 @@ export const MagicLinkCallback: FC<MagicLinkCallbackProps> = ({
     return params.toString() ? `${signInPath}?${params.toString()}` : signInPath;
   };
 
-  const redirectWithError = async (error: Error): Promise<void> => {
+  const redirectWithError = (error: Error): void => {
     sessionStorage.removeItem('thunderid_execution_id');
-    await setChallengeToken(null);
 
     onError?.(error);
 
@@ -148,7 +132,6 @@ export const MagicLinkCallback: FC<MagicLinkCallbackProps> = ({
           const nextExecutionId: string = response.executionId || executionId;
 
           sessionStorage.setItem('thunderid_execution_id', nextExecutionId);
-          await setChallengeToken(response.challengeToken ?? null);
 
           if (redirectURL) {
             initiateOAuthRedirect(redirectURL);
@@ -158,19 +141,17 @@ export const MagicLinkCallback: FC<MagicLinkCallbackProps> = ({
 
         if (response.flowStatus === EmbeddedSignInFlowStatusV2.Complete) {
           const redirectUrl: string | undefined = (response as any)?.redirectUrl || (response as any)?.redirect_uri;
-          const finalRedirectUrl: string | undefined = redirectUrl || afterSignInUrl;
 
           sessionStorage.removeItem('thunderid_execution_id');
           sessionStorage.removeItem('thunderid_auth_id');
-          await setChallengeToken(null);
 
           onSuccess?.({
-            redirectUrl: finalRedirectUrl,
+            redirectUrl,
             ...(response.data || {}),
           });
 
-          if (finalRedirectUrl && window?.location) {
-            window.location.href = finalRedirectUrl;
+          if (redirectUrl && window?.location) {
+            window.location.href = redirectUrl;
             return;
           }
 
@@ -185,18 +166,17 @@ export const MagicLinkCallback: FC<MagicLinkCallbackProps> = ({
 
         const nextExecutionId: string = response.executionId || executionId;
         sessionStorage.setItem('thunderid_execution_id', nextExecutionId);
-        await setChallengeToken(response.challengeToken ?? null);
         navigate(buildSignInPath(nextExecutionId, applicationId));
       } catch (err) {
         const error: Error = err instanceof Error ? err : new Error('Magic Link callback processing failed');
         // eslint-disable-next-line no-console
         console.error('Magic Link callback error:', err);
-        await redirectWithError(error);
+        redirectWithError(error);
       }
     };
 
     processMagicLink();
-  }, [afterSignInUrl, getStorageManager, isInitialized, isLoading, onError, onNavigate, onSuccess, signIn, signInPath]);
+  }, [isInitialized, isLoading, onError, onNavigate, onSuccess, signIn, signInPath]);
 
   return null;
 };
