@@ -110,8 +110,25 @@ class StorageManager<T> {
   }
 
   public async setTemporaryData(temporaryData: Partial<TemporaryStore>, userId?: string): Promise<void> {
-    this.setDataInBulk(this.resolveKey(Stores.TemporaryData, userId), temporaryData);
+    const resolvedKey = this.resolveKey(Stores.TemporaryData, userId);
+    const storeData: Partial<TemporaryStore> = {};
+
+    for (const [key, value] of Object.entries(temporaryData)) {
+      if (
+        key.startsWith('pkce_code_verifier') &&
+        StorageManager.isLocalStorageAvailable()
+      ) {
+        localStorage.setItem(`thunderid_pkce_${resolvedKey}_${key}`, value as string);
+      } else {
+        storeData[key] = value;
+      }
+    }
+
+    if (Object.keys(storeData).length > 0) {
+      await this.setDataInBulk(resolvedKey, storeData);
+    }
   }
+
 
   public async setSessionData(sessionData: Partial<SessionData>, userId?: string): Promise<void> {
     this.setDataInBulk(this.resolveKey(Stores.SessionData, userId), sessionData);
@@ -130,8 +147,28 @@ class StorageManager<T> {
   }
 
   public async getTemporaryData(userId?: string): Promise<TemporaryStore> {
-    return JSON.parse((await this.store.getData(this.resolveKey(Stores.TemporaryData, userId))) ?? null);
+    const resolvedKey = this.resolveKey(Stores.TemporaryData, userId);
+    const storeDataJSON: string = (await this.store.getData(resolvedKey)) ?? null;
+    const storeData: TemporaryStore = storeDataJSON ? JSON.parse(storeDataJSON) : {};
+
+    const pkceData: Record<string, string> = {};
+    if (StorageManager.isLocalStorageAvailable()) {
+      const prefix = `thunderid_pkce_${resolvedKey}_`;
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith(prefix)) {
+          const pkceKey = k.slice(prefix.length);
+          const value = localStorage.getItem(k);
+          if (value !== null) {
+            pkceData[pkceKey] = value;
+          }
+        }
+      }
+    }
+
+    return {...storeData, ...pkceData};
   }
+
 
   public async getPersistedData(userId?: string): Promise<TemporaryStore> {
     return JSON.parse((await this.store.getData(this.resolveKey(Stores.PersistedData, userId))) ?? null);
@@ -175,8 +212,22 @@ class StorageManager<T> {
   }
 
   public async removeTemporaryData(userId?: string): Promise<void> {
-    await this.store.removeData(this.resolveKey(Stores.TemporaryData, userId));
+    const resolvedKey = this.resolveKey(Stores.TemporaryData, userId);
+    await this.store.removeData(resolvedKey);
+
+    if (StorageManager.isLocalStorageAvailable()) {
+      const prefix = `thunderid_pkce_${resolvedKey}_`;
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith(prefix)) {
+          keysToRemove.push(k);
+        }
+      }
+      keysToRemove.forEach((k) => localStorage.removeItem(k));
+    }
   }
+
 
   public async removeSessionData(userId?: string): Promise<void> {
     await this.store.removeData(this.resolveKey(Stores.SessionData, userId));
@@ -195,10 +246,22 @@ class StorageManager<T> {
   }
 
   public async getTemporaryDataParameter(key: keyof TemporaryStore, userId?: string): Promise<TemporaryStoreValue> {
+    if (
+      typeof key === 'string' &&
+      key.startsWith('pkce_code_verifier') &&
+      StorageManager.isLocalStorageAvailable()
+    ) {
+      const resolvedKey = this.resolveKey(Stores.TemporaryData, userId);
+      const value = localStorage.getItem(`thunderid_pkce_${resolvedKey}_${key}`);
+      if (value !== null) {
+        return value;
+      }
+    }
     const data: string = await this.store.getData(this.resolveKey(Stores.TemporaryData, userId));
 
     return data && JSON.parse(data)[key];
   }
+
 
   public async getSessionDataParameter(key: keyof SessionData, userId?: string): Promise<TemporaryStoreValue> {
     const data: string = await this.store.getData(this.resolveKey(Stores.SessionData, userId));
@@ -222,8 +285,18 @@ class StorageManager<T> {
     value: TemporaryStoreValue,
     userId?: string,
   ): Promise<void> {
+    if (
+      typeof key === 'string' &&
+      key.startsWith('pkce_code_verifier') &&
+      StorageManager.isLocalStorageAvailable()
+    ) {
+      const resolvedKey = this.resolveKey(Stores.TemporaryData, userId);
+      localStorage.setItem(`thunderid_pkce_${resolvedKey}_${key}`, value as string);
+      return;
+    }
     await this.setValue(this.resolveKey(Stores.TemporaryData, userId), key, value);
   }
+
 
   public async setSessionDataParameter(
     key: keyof SessionData,
@@ -242,8 +315,18 @@ class StorageManager<T> {
   }
 
   public async removeTemporaryDataParameter(key: keyof TemporaryStore, userId?: string): Promise<void> {
+    if (
+      typeof key === 'string' &&
+      key.startsWith('pkce_code_verifier') &&
+      StorageManager.isLocalStorageAvailable()
+    ) {
+      const resolvedKey = this.resolveKey(Stores.TemporaryData, userId);
+      localStorage.removeItem(`thunderid_pkce_${resolvedKey}_${key}`);
+      return;
+    }
     await this.removeValue(this.resolveKey(Stores.TemporaryData, userId), key);
   }
+
 
   public async removeSessionDataParameter(key: keyof SessionData, userId?: string): Promise<void> {
     await this.removeValue(this.resolveKey(Stores.SessionData, userId), key);

@@ -150,7 +150,7 @@ export const DialogTrigger: ForwardRefExoticComponent<
   ({children, asChild = false, ...props}: HTMLProps<HTMLElement> & DialogTriggerProps, propRef: Ref<HTMLElement>) => {
     const context: DialogHookReturn = useDialogContext();
     const childrenRef: Ref<HTMLElement> = (children as any).ref;
-    const ref: ReturnType<typeof useMergeRefs> = useMergeRefs([context.refs.setReference, propRef, childrenRef]);
+    const ref: ReturnType<typeof useMergeRefs> = useMergeRefs([context.refs.setReference, propRef as any, childrenRef as any]);
 
     if (asChild && isValidElement(children)) {
       return cloneElement(
@@ -160,12 +160,12 @@ export const DialogTrigger: ForwardRefExoticComponent<
           ...props,
           ...(children.props as any),
           'data-state': context.open ? 'open' : 'closed',
-        }),
+        }) as any,
       );
     }
 
     return (
-      <button ref={ref} data-state={context.open ? 'open' : 'closed'} {...context.getReferenceProps(props)}>
+      <button ref={ref as any} data-state={context.open ? 'open' : 'closed'} {...(context.getReferenceProps(props as any) as any)}>
         {children}
       </button>
     );
@@ -178,7 +178,7 @@ export const DialogContent: ForwardRefExoticComponent<HTMLProps<HTMLDivElement> 
       const {context: floatingContext, ...context} = useDialogContext();
       const {theme, colorScheme}: ReturnType<typeof useTheme> = useTheme();
       const styles: Record<string, string> = useStyles(theme, colorScheme);
-      const ref: ReturnType<typeof useMergeRefs> = useMergeRefs([context.refs.setFloating, propRef]);
+      const ref: ReturnType<typeof useMergeRefs> = useMergeRefs([context.refs.setFloating, propRef as any]);
 
       if (!floatingContext.open) return null;
 
@@ -190,11 +190,11 @@ export const DialogContent: ForwardRefExoticComponent<HTMLProps<HTMLDivElement> 
           >
             <FloatingFocusManager context={floatingContext} initialFocus={-1}>
               <div
-                ref={ref}
+                ref={ref as any}
                 className={cx(withVendorCSSClassPrefix(bem('dialog', 'content')), styles['content'], props.className)}
                 aria-labelledby={context.labelId}
                 aria-describedby={context.descriptionId}
-                {...context.getFloatingProps(props)}
+                {...(context.getFloatingProps(props as any) as any)}
               >
                 {props.children}
               </div>
@@ -291,7 +291,7 @@ export const DialogClose: ForwardRefExoticComponent<
   ) => {
     const context: DialogHookReturn = useDialogContext();
     const childrenRef: Ref<HTMLButtonElement> = (children as any)?.ref;
-    const ref: ReturnType<typeof useMergeRefs> = useMergeRefs([propRef, childrenRef]);
+    const ref: ReturnType<typeof useMergeRefs> = useMergeRefs([propRef as any, childrenRef as any]);
 
     const handleClick = (event: MouseEvent<HTMLButtonElement>): void => {
       context.setOpen(false);
@@ -300,7 +300,7 @@ export const DialogClose: ForwardRefExoticComponent<
 
     if (asChild && isValidElement(children)) {
       return cloneElement(children, {
-        ref,
+        ref: ref as any,
         ...props,
         ...(children.props as any),
         onClick: handleClick,
@@ -310,7 +310,7 @@ export const DialogClose: ForwardRefExoticComponent<
     return (
       <Button
         {...props}
-        ref={ref}
+        ref={ref as any}
         onClick={handleClick}
         className={cx(withVendorCSSClassPrefix(bem('dialog', 'close')), props.className)}
         variant="text"

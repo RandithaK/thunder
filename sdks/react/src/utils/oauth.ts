@@ -17,16 +17,14 @@
  */
 
 import {navigate} from '@thunderid/browser';
-import {getStorage} from './storage';
 
 /**
  * Initiates OAuth redirect with CSRF protection.
- * Generates random state, stores return path in sessionStorage/localStorage, and redirects to OAuth provider.
+ * Generates random state, stores return path in sessionStorage, and redirects to OAuth provider.
  *
  * @param redirectURL - OAuth authorization URL from the server
- * @param storage - Storage mechanism configured ('localStorage' | 'sessionStorage')
  */
-export function initiateOAuthRedirect(redirectURL: string, storage?: string): void {
+export function initiateOAuthRedirect(redirectURL: string): void {
   const basePath: string = document.querySelector('base')?.getAttribute('href') || '';
   let returnPath: string = window.location.pathname;
 
@@ -36,7 +34,7 @@ export function initiateOAuthRedirect(redirectURL: string, storage?: string): vo
 
   const state: string = crypto.randomUUID();
 
-  getStorage(storage).setItem(
+  sessionStorage.setItem(
     `thunderid_oauth_${state}`,
     JSON.stringify({
       path: returnPath,

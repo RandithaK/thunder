@@ -1882,8 +1882,8 @@ importers:
   samples/apps/react-sdk-sample:
     dependencies:
       '@thunderid/react':
-        specifier: 0.0.5
-        version: 0.0.5(@types/react@19.2.14)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        specifier: workspace:^
+        version: link:../../../sdks/react
       '@wso2/oxygen-ui':
         specifier: 0.0.1-alpha.10
         version: 0.0.1-alpha.10(6fb253412db1176a6ec158a6cfaa2e46)
@@ -7198,19 +7198,6 @@ packages:
     engines: {node: '>=12', npm: '>=6'}
     peerDependencies:
       '@testing-library/dom': '>=7.21.4'
-
-  '@thunderid/browser@0.0.5':
-    resolution: {integrity: sha512-9SaH+s0F2LjjFZhSdcJd/KowxDJJwjwzTbsQ4A5KFD1tp2GSTDmQUBB+dEMwrUuOeGFXZ9LemzBgci6lHJNTNg==}
-
-  '@thunderid/javascript@0.0.5':
-    resolution: {integrity: sha512-lMjbHCsNgYWclUiPlN3CA6vjKSyjIBIxVGSnuJwiC9eVakVsWmRuxkO8KX6AWlA4SRHgpGLMnD4ZE5lpM+gi9g==}
-
-  '@thunderid/react@0.0.5':
-    resolution: {integrity: sha512-3ZJ7+Qo/WeZfCgNPwjAtXRzubOsvfXf54eS3kYKqH4Cyvql4B99xYbfTdsvlUHcA8NiR9QAmIEW4s3mcBoxpRg==}
-    peerDependencies:
-      '@types/react': '>=16.8.0'
-      react: '>=16.8.0'
-      react-dom: '>=16.8.0'
 
   '@tybys/wasm-util@0.10.2':
     resolution: {integrity: sha512-RoBvJ2X0wuKlWFIjrwffGw1IqZHKQqzIchKaadZZfnNpsAYp2mM0h36JtPCjNDAHGgYez/15uMBpfGwchhiMgg==}
@@ -21629,33 +21616,6 @@ snapshots:
   '@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1)':
     dependencies:
       '@testing-library/dom': 10.4.1
-
-  '@thunderid/browser@0.0.5':
-    dependencies:
-      '@thunderid/javascript': 0.0.5
-      base64url: 3.0.1
-      buffer: 6.0.3
-      core-js: 3.42.0
-      crypto-browserify: 3.12.1
-      fast-sha256: 1.3.0
-      jose: 5.2.0
-      process: 0.11.10
-      randombytes: 2.1.0
-      stream-browserify: 3.0.0
-      tslib: 2.8.1
-
-  '@thunderid/javascript@0.0.5':
-    dependencies:
-      jose: 5.2.0
-      tslib: 2.8.1
-
-  '@thunderid/react@0.0.5(@types/react@19.2.14)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
-    dependencies:
-      '@thunderid/browser': 0.0.5
-      '@types/react': 19.2.14
-      react: 19.2.3
-      react-dom: 19.2.3(react@19.2.3)
-      tslib: 2.8.1
 
   '@tybys/wasm-util@0.10.2':
     dependencies:

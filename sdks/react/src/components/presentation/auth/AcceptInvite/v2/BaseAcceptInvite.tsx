@@ -29,7 +29,6 @@ import useTranslation from '../../../../../hooks/useTranslation';
 import {useOAuthCallback} from '../../../../../hooks/v2/useOAuthCallback';
 import {initiateOAuthRedirect} from '../../../../../utils/oauth';
 import {normalizeFlowResponse, extractErrorMessage} from '../../../../../utils/v2/flowTransformer';
-import {getStorage} from '../../../../../utils/storage';
 import AlertPrimitive from '../../../../primitives/Alert/Alert';
 import Button from '../../../../primitives/Button/Button';
 // eslint-disable-next-line import/no-named-as-default
@@ -267,7 +266,7 @@ const BaseAcceptInvite: FC<BaseAcceptInviteProps> = ({
   showTitle = true,
   showSubtitle = true,
 }: BaseAcceptInviteProps): ReactElement => {
-  const {meta, isInitialized, getStorageManager, storage} = useThunderID();
+  const {meta, isInitialized, getStorageManager} = useThunderID();
   const {t} = useTranslation(preferences?.i18n);
   const {theme} = useTheme();
   const customRenderers: ComponentRendererMap = useContext(ComponentRendererContext);
@@ -617,7 +616,7 @@ const BaseAcceptInvite: FC<BaseAcceptInviteProps> = ({
       try {
         // Store executionId in sessionStorage for OAuth callback
         if (executionId) {
-          getStorage(storage).setItem('thunderid_execution_id', executionId);
+          sessionStorage.setItem('thunderid_execution_id', executionId);
         }
 
         // Send the invite token to validate and continue the flow

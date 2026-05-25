@@ -45,23 +45,40 @@ class SPAUtils {
   }
 
   /**
-   * Retrieves a PKCE verifier from sessionStorage.
+   * Retrieves a PKCE verifier from storage.
    *
    * @param pkceKey - The storage key for the PKCE verifier.
    * @returns The stored verifier string, or an empty string if not found.
    */
   public static getPKCE(pkceKey: string): string {
-    return sessionStorage.getItem(pkceKey) ?? '';
+    let pkce = '';
+    try {
+      pkce = localStorage.getItem(pkceKey) ?? '';
+    } catch {
+      // Ignore error
+    }
+    if (!pkce) {
+      try {
+        pkce = sessionStorage.getItem(pkceKey) ?? '';
+      } catch {
+        // Ignore error
+      }
+    }
+    return pkce;
   }
 
   /**
-   * Persists a PKCE verifier in sessionStorage.
+   * Persists a PKCE verifier in storage.
    *
    * @param pkceKey - The storage key.
    * @param pkce - The PKCE verifier value.
    */
   public static setPKCE(pkceKey: string, pkce: string): void {
-    sessionStorage.setItem(pkceKey, pkce);
+    try {
+      localStorage.setItem(pkceKey, pkce);
+    } catch {
+      sessionStorage.setItem(pkceKey, pkce);
+    }
   }
 
   /**
@@ -94,12 +111,21 @@ class SPAUtils {
   }
 
   /**
-   * Removes a PKCE verifier from sessionStorage.
+   * Removes a PKCE verifier from storage.
    *
    * @param pkceKey - The storage key to remove.
    */
   public static removePKCE(pkceKey: string): void {
-    sessionStorage.removeItem(pkceKey);
+    try {
+      localStorage.removeItem(pkceKey);
+    } catch {
+      // Ignore error
+    }
+    try {
+      sessionStorage.removeItem(pkceKey);
+    } catch {
+      // Ignore error
+    }
   }
 
   /**

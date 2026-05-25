@@ -54,8 +54,6 @@ createRoot(document.getElementById("root")!).render(
       <ThunderIDProvider
         baseUrl={baseUrl}
         clientId={clientId}
-        platform="AsgardeoV2"
-        storage="localStorage"
       >
         <App />
       </ThunderIDProvider>

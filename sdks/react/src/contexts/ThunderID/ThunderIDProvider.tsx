@@ -41,7 +41,6 @@ import ThunderIDContext from './ThunderIDContext';
 import useBrowserUrl from '../../hooks/useBrowserUrl';
 import {ThunderIDReactConfig} from '../../models/config';
 import ThunderIDReactClient from '../../ThunderIDReactClient';
-import {getStorage} from '../../utils/storage';
 import BrandingProvider from '../Branding/BrandingProvider';
 import ComponentRendererProvider from '../ComponentRenderer/ComponentRendererProvider';
 import FlowProvider from '../Flow/FlowProvider';
@@ -77,7 +76,6 @@ const ThunderIDProvider: FC<PropsWithChildren<ThunderIDProviderProps>> = ({
   signInOptions,
   tokenRequest,
   syncSession,
-  storage,
   instanceId = 0,
   organizationChain,
   ...rest
@@ -110,7 +108,6 @@ const ThunderIDProvider: FC<PropsWithChildren<ThunderIDProviderProps>> = ({
     signInUrl,
     signUpUrl,
     syncSession,
-    storage,
     ...rest,
   });
 
@@ -273,7 +270,7 @@ const ThunderIDProvider: FC<PropsWithChildren<ThunderIDProviderProps>> = ({
           const urlParams: URLSearchParams = currentUrl.searchParams;
           const code: string | null = urlParams.get('code');
           const executionIdFromUrl: string | null = urlParams.get('executionId');
-          const storedExecutionId: string | null = getStorage(config.storage).getItem('thunderid_execution_id');
+          const storedExecutionId: string | null = sessionStorage.getItem('thunderid_execution_id');
 
           if (code && !executionIdFromUrl && !storedExecutionId) {
             await signIn();
@@ -579,7 +576,6 @@ const ThunderIDProvider: FC<PropsWithChildren<ThunderIDProviderProps>> = ({
       signOut,
       signUp,
       signUpUrl,
-      storage: config.storage || 'sessionStorage',
       switchOrganization,
       syncSession,
       user,
@@ -588,7 +584,6 @@ const ThunderIDProvider: FC<PropsWithChildren<ThunderIDProviderProps>> = ({
       applicationId,
       config?.organizationHandle,
       config.afterSignInUrl,
-      config.storage,
       signInUrl,
       signUpUrl,
       baseUrl,
