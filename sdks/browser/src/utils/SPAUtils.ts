@@ -51,20 +51,7 @@ class SPAUtils {
    * @returns The stored verifier string, or an empty string if not found.
    */
   public static getPKCE(pkceKey: string): string {
-    let pkce = '';
-    try {
-      pkce = localStorage.getItem(pkceKey) ?? '';
-    } catch {
-      // Ignore error
-    }
-    if (!pkce) {
-      try {
-        pkce = sessionStorage.getItem(pkceKey) ?? '';
-      } catch {
-        // Ignore error
-      }
-    }
-    return pkce;
+    return localStorage.getItem(pkceKey) ?? '';
   }
 
   /**
@@ -74,11 +61,7 @@ class SPAUtils {
    * @param pkce - The PKCE verifier value.
    */
   public static setPKCE(pkceKey: string, pkce: string): void {
-    try {
-      localStorage.setItem(pkceKey, pkce);
-    } catch {
-      sessionStorage.setItem(pkceKey, pkce);
-    }
+    localStorage.setItem(pkceKey, pkce);
   }
 
   /**
@@ -116,16 +99,7 @@ class SPAUtils {
    * @param pkceKey - The storage key to remove.
    */
   public static removePKCE(pkceKey: string): void {
-    try {
-      localStorage.removeItem(pkceKey);
-    } catch {
-      // Ignore error
-    }
-    try {
-      sessionStorage.removeItem(pkceKey);
-    } catch {
-      // Ignore error
-    }
+    localStorage.removeItem(pkceKey);
   }
 
   /**
