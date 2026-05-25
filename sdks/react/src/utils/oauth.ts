@@ -47,4 +47,3 @@ export function initiateOAuthRedirect(redirectURL: string): void {
 
   navigate(redirectUrlObj.toString());
 }
-
