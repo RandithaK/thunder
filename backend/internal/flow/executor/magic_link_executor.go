@@ -109,9 +109,7 @@ func (m *magicLinkAuthExecutor) Execute(ctx *core.NodeContext) (*common.Executor
 }
 
 // GetExecutionPolicy returns the execution policy for the given mode.
-// The verify mode skips challenge token validation because the magic link is opened
-// in a new browser tab that has no challengeToken from the original sign-in session.
-// This mirrors the pattern used by inviteExecutor.
+// The verify mode skips challenge token validation because the invite token itself serves as the challenge.
 func (m *magicLinkAuthExecutor) GetExecutionPolicy(mode string) *core.ExecutionPolicy {
 	if mode == ExecutorModeVerify {
 		return &core.ExecutionPolicy{
