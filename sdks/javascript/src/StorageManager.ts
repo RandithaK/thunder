@@ -151,14 +151,21 @@ class StorageManager<T> {
     const storeData: TemporaryStore = storeDataJSON ? JSON.parse(storeDataJSON) : {};
 
     if (StorageManager.isLocalStorageAvailable()) {
-      const pkceValue = localStorage.getItem(`thunderid_pkce_${resolvedKey}_pkce_code_verifier`);
-      if (pkceValue !== null) {
-        storeData['pkce_code_verifier'] = pkceValue;
-      }
+      const prefix = `thunderid_pkce_${resolvedKey}_`;
+      Object.keys(localStorage)
+        .filter((storageKey) => storageKey.startsWith(prefix))
+        .forEach((storageKey) => {
+          const pkceKey = storageKey.slice(prefix.length);
+          const value = localStorage.getItem(storageKey);
+          if (value !== null) {
+            storeData[pkceKey] = value;
+          }
+        });
     }
 
     return storeData;
   }
+
 
   public async getPersistedData(userId?: string): Promise<TemporaryStore> {
     return JSON.parse((await this.store.getData(this.resolveKey(Stores.PersistedData, userId))) ?? null);
