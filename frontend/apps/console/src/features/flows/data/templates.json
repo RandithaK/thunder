@@ -8333,7 +8333,7 @@
     "flowType": "AUTHENTICATION",
     "display": {
       "label": "Magic Link",
-      "description": "Sign in with a magic link sent to your email",
+      "description": "Passwordless sign-in via magic link",
       "image": "assets/images/icons/link.svg",
       "showOnResourcePanel": true
     },
@@ -8589,7 +8589,7 @@
     "flowType": "AUTHENTICATION",
     "display": {
       "label": "Basic + Magic Link",
-      "description": "Username/password then magic link sign-in",
+      "description": "Multi-method sign-in with magic link second factor",
       "image": "assets/images/icons/link.svg",
       "showOnResourcePanel": true
     },
@@ -8981,7 +8981,7 @@
     "flowType": "REGISTRATION",
     "display": {
       "label": "Magic Link",
-      "description": "Sign up with a magic link sent to your email",
+      "description": "Register via magic link",
       "image": "assets/images/icons/link.svg",
       "showOnResourcePanel": true
     },
@@ -9348,7 +9348,7 @@
     "flowType": "REGISTRATION",
     "display": {
       "label": "Basic + Magic Link",
-      "description": "Register with password and verify with magic link",
+      "description": "Multi-method registration with magic link",
       "image": "assets/images/icons/link.svg",
       "showOnResourcePanel": true
     },
