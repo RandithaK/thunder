@@ -8383,18 +8383,14 @@
               },
               {
                 "align": "center",
-                "category": "DISPLAY",
                 "id": "display_heading",
                 "label": "{{ t(signin:forms.magicLink.title) }}",
-                "resourceType": "ELEMENT",
                 "type": "TEXT",
                 "variant": "HEADING_1"
               },
               {
-                "category": "BLOCK",
                 "components": [
                   {
-                    "category": "FIELD",
                     "hint": "",
                     "id": "input_001",
                     "inputType": "email",
@@ -8402,21 +8398,17 @@
                     "placeholder": "{{ t(signin:forms.magicLink.fields.email.placeholder) }}",
                     "ref": "email",
                     "required": true,
-                    "resourceType": "ELEMENT",
                     "type": "EMAIL_INPUT"
                   },
                   {
-                    "category": "ACTION",
                     "eventType": "SUBMIT",
                     "id": "magic_link_action",
                     "label": "{{ t(signin:forms.magicLink.actions.submit.label) }}",
-                    "resourceType": "ELEMENT",
                     "type": "ACTION",
                     "variant": "PRIMARY"
                   }
                 ],
                 "id": "block_001",
-                "resourceType": "ELEMENT",
                 "type": "BLOCK"
               }
             ]
@@ -8456,7 +8448,7 @@
             "mode": "generate",
             "inputs": [
               {
-                "ref": "input_magic_link_dest",
+                "ref": "input_001",
                 "identifier": "email",
                 "type": "EMAIL_INPUT",
                 "required": true
@@ -8464,6 +8456,7 @@
             ]
           },
           "onSuccess": "send_email",
+          "onIncomplete": "prompt_email",
           "onFailure": "prompt_email"
         },
         {
@@ -8487,6 +8480,7 @@
             "mode": "send"
           },
           "onSuccess": "prompt_email_sent",
+          "onIncomplete": "prompt_email",
           "onFailure": "prompt_email"
         },
         {
@@ -8495,61 +8489,43 @@
           "layout": {
             "size": {
               "width": 350,
-              "height": 400
+              "height": 422
             },
             "position": {
-              "x": 1430,
-              "y": 183
+              "x": 1421,
+              "y": -264
             }
           },
           "meta": {
             "components": [
               {
-                "alt": "{{ t(signin:images.app_logo.alt) }}",
+                "resourceType": "ELEMENT",
                 "category": "DISPLAY",
+                "type": "IMAGE",
+                "src": "{{ meta(application.logoUrl) }}",
+                "alt": "{{ t(signin:images.app_logo.alt) }}",
                 "height": "60",
                 "id": "image_logo_sent",
-                "resourceType": "ELEMENT",
-                "src": "{{ meta(application.logoUrl) }}",
-                "type": "IMAGE",
                 "width": ""
               },
               {
+                "type": "TEXT",
                 "align": "center",
-                "category": "DISPLAY",
                 "id": "display_email_sent_heading",
                 "label": "{{ t(signin:forms.magicLink.emailSent.title) }}",
-                "resourceType": "ELEMENT",
-                "type": "TEXT",
                 "variant": "HEADING_1"
               },
               {
+                "type": "TEXT",
                 "align": "center",
-                "category": "DISPLAY",
                 "id": "display_email_sent_desc",
                 "label": "{{ t(signin:forms.magicLink.emailSent.description) }}",
-                "resourceType": "ELEMENT",
-                "type": "TEXT",
                 "variant": "BODY_1"
               }
             ]
           },
-          "prompts": [
-            {
-              "inputs": [
-                {
-                  "ref": "magic_link_token_input",
-                  "identifier": "token",
-                  "type": "HIDDEN",
-                  "required": true
-                }
-              ],
-              "action": {
-                "ref": "magic_link_action",
-                "nextNode": "verify_magic_link"
-              }
-            }
-          ]
+          "message": "{{ t(signin:forms.magicLink.emailSent.title) }}",
+          "next": "verify_magic_link"
         },
         {
           "id": "verify_magic_link",
@@ -8663,18 +8639,14 @@
               },
               {
                 "align": "center",
-                "category": "DISPLAY",
                 "id": "display_heading",
                 "label": "{{ t(signin:forms.choose_auth_method.title) }}",
-                "resourceType": "ELEMENT",
                 "type": "TEXT",
                 "variant": "HEADING_1"
               },
               {
-                "category": "BLOCK",
                 "components": [
                   {
-                    "category": "FIELD",
                     "hint": "",
                     "id": "input_001",
                     "inputType": "text",
@@ -8682,11 +8654,9 @@
                     "placeholder": "{{ t(signin:forms.choose_auth_method.fields.username.placeholder) }}",
                     "ref": "username",
                     "required": true,
-                    "resourceType": "ELEMENT",
                     "type": "TEXT_INPUT"
                   },
                   {
-                    "category": "FIELD",
                     "hint": "",
                     "id": "input_002",
                     "inputType": "text",
@@ -8694,21 +8664,17 @@
                     "placeholder": "{{ t(signin:forms.choose_auth_method.fields.password.placeholder) }}",
                     "ref": "password",
                     "required": true,
-                    "resourceType": "ELEMENT",
                     "type": "PASSWORD_INPUT"
                   },
                   {
-                    "category": "ACTION",
                     "eventType": "SUBMIT",
                     "id": "action_001",
                     "label": "{{ t(signin:forms.choose_auth_method.actions.submit.label) }}",
-                    "resourceType": "ELEMENT",
                     "type": "ACTION",
                     "variant": "PRIMARY"
                   }
                 ],
                 "id": "block_001",
-                "resourceType": "ELEMENT",
                 "type": "BLOCK"
               }
             ]
@@ -8779,7 +8745,82 @@
               }
             ]
           },
-          "onSuccess": "generate_magic_link"
+          "onSuccess": "generate_magic_link",
+          "onIncomplete": "prompt_email"
+        },
+        {
+          "id": "prompt_email",
+          "type": "PROMPT",
+          "layout": {
+            "size": {
+              "width": 350,
+              "height": 560
+            },
+            "position": {
+              "x": 1100,
+              "y": -264
+            }
+          },
+          "meta": {
+            "components": [
+              {
+                "alt": "{{ t(signin:images.app_logo.alt) }}",
+                "category": "DISPLAY",
+                "height": "60",
+                "id": "image_logo",
+                "resourceType": "ELEMENT",
+                "src": "{{ meta(application.logoUrl) }}",
+                "type": "IMAGE",
+                "width": ""
+              },
+              {
+                "align": "center",
+                "id": "display_heading",
+                "label": "{{ t(signin:forms.magicLink.title) }}",
+                "type": "TEXT",
+                "variant": "HEADING_1"
+              },
+              {
+                "components": [
+                  {
+                    "hint": "",
+                    "id": "input_003",
+                    "inputType": "email",
+                    "label": "{{ t(signin:forms.magicLink.fields.email.label) }}",
+                    "placeholder": "{{ t(signin:forms.magicLink.fields.email.placeholder) }}",
+                    "ref": "email",
+                    "required": true,
+                    "type": "EMAIL_INPUT"
+                  },
+                  {
+                    "eventType": "SUBMIT",
+                    "id": "magic_link_action",
+                    "label": "{{ t(signin:forms.magicLink.actions.submit.label) }}",
+                    "type": "ACTION",
+                    "variant": "PRIMARY"
+                  }
+                ],
+                "id": "block_001",
+                "type": "BLOCK"
+              }
+            ]
+          },
+          "prompts": [
+            {
+              "inputs": [
+                {
+                  "ref": "input_003",
+                  "identifier": "email",
+                  "type": "EMAIL_INPUT",
+                  "required": true
+                }
+              ],
+              "action": {
+                "ref": "magic_link_action",
+                "nextNode": "generate_magic_link"
+              }
+            }
+          ]
         },
         {
           "id": "generate_magic_link",
@@ -8799,7 +8840,7 @@
             "mode": "generate",
             "inputs": [
               {
-                "ref": "input_magic_link_dest",
+                "ref": "input_003",
                 "identifier": "email",
                 "type": "EMAIL_INPUT",
                 "required": true
@@ -8807,7 +8848,8 @@
             ]
           },
           "onSuccess": "send_email",
-          "onFailure": "prompt_email"
+          "onIncomplete": "prompt_credentials",
+          "onFailure": "prompt_credentials"
         },
         {
           "id": "send_email",
@@ -8830,7 +8872,8 @@
             "mode": "send"
           },
           "onSuccess": "prompt_email_sent",
-          "onFailure": "prompt_email"
+          "onIncomplete": "prompt_credentials",
+          "onFailure": "prompt_credentials"
         },
         {
           "id": "prompt_email_sent",
@@ -8838,61 +8881,43 @@
           "layout": {
             "size": {
               "width": 350,
-              "height": 400
+              "height": 422
             },
             "position": {
-              "x": 2090,
-              "y": 183
+              "x": 2068,
+              "y": -164
             }
           },
           "meta": {
             "components": [
               {
-                "alt": "{{ t(signin:images.app_logo.alt) }}",
+                "resourceType": "ELEMENT",
                 "category": "DISPLAY",
+                "type": "IMAGE",
+                "src": "{{ meta(application.logoUrl) }}",
+                "alt": "{{ t(signin:images.app_logo.alt) }}",
                 "height": "60",
                 "id": "image_logo_sent",
-                "resourceType": "ELEMENT",
-                "src": "{{ meta(application.logoUrl) }}",
-                "type": "IMAGE",
                 "width": ""
               },
               {
+                "type": "TEXT",
                 "align": "center",
-                "category": "DISPLAY",
                 "id": "display_email_sent_heading",
                 "label": "{{ t(signin:forms.magicLink.emailSent.title) }}",
-                "resourceType": "ELEMENT",
-                "type": "TEXT",
                 "variant": "HEADING_1"
               },
               {
+                "type": "TEXT",
                 "align": "center",
-                "category": "DISPLAY",
                 "id": "display_email_sent_desc",
                 "label": "{{ t(signin:forms.magicLink.emailSent.description) }}",
-                "resourceType": "ELEMENT",
-                "type": "TEXT",
                 "variant": "BODY_1"
               }
             ]
           },
-          "prompts": [
-            {
-              "inputs": [
-                {
-                  "ref": "magic_link_token_input",
-                  "identifier": "token",
-                  "type": "HIDDEN",
-                  "required": true
-                }
-              ],
-              "action": {
-                "ref": "magic_link_action",
-                "nextNode": "verify_magic_link"
-              }
-            }
-          ]
+          "message": "{{ t(signin:forms.magicLink.emailSent.title) }}",
+          "next": "verify_magic_link"
         },
         {
           "id": "verify_magic_link",
@@ -8912,7 +8937,7 @@
             "mode": "verify"
           },
           "onSuccess": "auth_assert",
-          "onFailure": "prompt_email"
+          "onFailure": "prompt_credentials"
         },
         {
           "id": "auth_assert",
@@ -9025,18 +9050,14 @@
               },
               {
                 "align": "center",
-                "category": "DISPLAY",
                 "id": "heading_usertype",
                 "label": "{{ t(signup:forms.user_type.title) }}",
-                "resourceType": "ELEMENT",
                 "type": "TEXT",
                 "variant": "HEADING_1"
               },
               {
-                "category": "BLOCK",
                 "components": [
                   {
-                    "category": "FIELD",
                     "hint": "",
                     "id": "usertype_input",
                     "label": "{{ t(signup:forms.user_type.fields.user_type.label) }}",
@@ -9044,21 +9065,17 @@
                     "placeholder": "{{ t(signup:forms.user_type.fields.user_type.placeholder) }}",
                     "ref": "userType",
                     "required": true,
-                    "resourceType": "ELEMENT",
                     "type": "SELECT"
                   },
                   {
-                    "category": "ACTION",
                     "eventType": "SUBMIT",
                     "id": "action_usertype",
                     "label": "{{ t(signup:forms.user_type.actions.continue.label) }}",
-                    "resourceType": "ELEMENT",
                     "type": "ACTION",
                     "variant": "PRIMARY"
                   }
                 ],
                 "id": "block_usertype",
-                "resourceType": "ELEMENT",
                 "type": "BLOCK"
               }
             ]
@@ -9086,11 +9103,11 @@
           "layout": {
             "size": {
               "width": 350,
-              "height": 560
+              "height": 603
             },
             "position": {
-              "x": 653,
-              "y": 87
+              "x": 684,
+              "y": 538
             }
           },
           "meta": {
@@ -9107,18 +9124,14 @@
               },
               {
                 "align": "center",
-                "category": "DISPLAY",
                 "id": "display_heading",
                 "label": "{{ t(signup:forms.collect_user_info.title) }}",
-                "resourceType": "ELEMENT",
                 "type": "TEXT",
                 "variant": "HEADING_1"
               },
               {
-                "category": "BLOCK",
                 "components": [
                   {
-                    "category": "FIELD",
                     "hint": "",
                     "id": "input_001",
                     "inputType": "email",
@@ -9126,21 +9139,17 @@
                     "placeholder": "{{ t(signup:forms.collect_user_info.fields.email.placeholder) }}",
                     "ref": "email",
                     "required": true,
-                    "resourceType": "ELEMENT",
                     "type": "EMAIL_INPUT"
                   },
                   {
-                    "category": "ACTION",
                     "eventType": "SUBMIT",
                     "id": "magic_link_action",
                     "label": "{{ t(signup:forms.collect_user_info.actions.submit.label) }}",
-                    "resourceType": "ELEMENT",
                     "type": "ACTION",
                     "variant": "PRIMARY"
                   }
                 ],
                 "id": "block_001",
-                "resourceType": "ELEMENT",
                 "type": "BLOCK"
               }
             ]
@@ -9180,7 +9189,7 @@
             "mode": "generate",
             "inputs": [
               {
-                "ref": "input_magic_link_dest",
+                "ref": "input_001",
                 "identifier": "email",
                 "type": "EMAIL_INPUT",
                 "required": true
@@ -9188,6 +9197,7 @@
             ]
           },
           "onSuccess": "send_email",
+          "onIncomplete": "prompt_email",
           "onFailure": "prompt_email"
         },
         {
@@ -9211,6 +9221,7 @@
             "mode": "send"
           },
           "onSuccess": "prompt_email_sent",
+          "onIncomplete": "prompt_email",
           "onFailure": "prompt_email"
         },
         {
@@ -9219,61 +9230,43 @@
           "layout": {
             "size": {
               "width": 350,
-              "height": 400
+              "height": 422
             },
             "position": {
               "x": 1840,
-              "y": 183
+              "y": -193
             }
           },
           "meta": {
             "components": [
               {
-                "alt": "{{ t(signup:images.app_logo.alt) }}",
+                "resourceType": "ELEMENT",
                 "category": "DISPLAY",
+                "type": "IMAGE",
+                "src": "{{ meta(application.logoUrl) }}",
+                "alt": "{{ t(signup:images.app_logo.alt) }}",
                 "height": "60",
                 "id": "image_logo_sent",
-                "resourceType": "ELEMENT",
-                "src": "{{ meta(application.logoUrl) }}",
-                "type": "IMAGE",
                 "width": ""
               },
               {
+                "type": "TEXT",
                 "align": "center",
-                "category": "DISPLAY",
                 "id": "display_email_sent_heading",
                 "label": "{{ t(signup:forms.magicLink.emailSent.title) }}",
-                "resourceType": "ELEMENT",
-                "type": "TEXT",
                 "variant": "HEADING_1"
               },
               {
+                "type": "TEXT",
                 "align": "center",
-                "category": "DISPLAY",
                 "id": "display_email_sent_desc",
                 "label": "{{ t(signup:forms.magicLink.emailSent.description) }}",
-                "resourceType": "ELEMENT",
-                "type": "TEXT",
                 "variant": "BODY_1"
               }
             ]
           },
-          "prompts": [
-            {
-              "inputs": [
-                {
-                  "ref": "magic_link_token_input",
-                  "identifier": "token",
-                  "type": "HIDDEN",
-                  "required": true
-                }
-              ],
-              "action": {
-                "ref": "magic_link_action",
-                "nextNode": "verify_magic_link"
-              }
-            }
-          ]
+          "message": "{{ t(signup:forms.magicLink.emailSent.title) }}",
+          "next": "verify_magic_link"
         },
         {
           "id": "verify_magic_link",
@@ -9407,7 +9400,7 @@
             },
             "position": {
               "x": 653,
-              "y": -264
+              "y": -469
             }
           },
           "meta": {
@@ -9424,18 +9417,14 @@
               },
               {
                 "align": "center",
-                "category": "DISPLAY",
                 "id": "heading_usertype",
                 "label": "{{ t(signup:forms.user_type.title) }}",
-                "resourceType": "ELEMENT",
                 "type": "TEXT",
                 "variant": "HEADING_1"
               },
               {
-                "category": "BLOCK",
                 "components": [
                   {
-                    "category": "FIELD",
                     "hint": "",
                     "id": "usertype_input",
                     "label": "{{ t(signup:forms.user_type.fields.user_type.label) }}",
@@ -9443,21 +9432,17 @@
                     "placeholder": "{{ t(signup:forms.user_type.fields.user_type.placeholder) }}",
                     "ref": "userType",
                     "required": true,
-                    "resourceType": "ELEMENT",
                     "type": "SELECT"
                   },
                   {
-                    "category": "ACTION",
                     "eventType": "SUBMIT",
                     "id": "action_usertype",
                     "label": "{{ t(signup:forms.user_type.actions.continue.label) }}",
-                    "resourceType": "ELEMENT",
                     "type": "ACTION",
                     "variant": "PRIMARY"
                   }
                 ],
                 "id": "block_usertype",
-                "resourceType": "ELEMENT",
                 "type": "BLOCK"
               }
             ]
@@ -9485,11 +9470,11 @@
           "layout": {
             "size": {
               "width": 350,
-              "height": 680
+              "height": 762
             },
             "position": {
               "x": 653,
-              "y": 30
+              "y": 434
             }
           },
           "meta": {
@@ -9506,18 +9491,14 @@
               },
               {
                 "align": "center",
-                "category": "DISPLAY",
                 "id": "display_heading",
                 "label": "{{ t(signup:forms.collect_user_info.title) }}",
-                "resourceType": "ELEMENT",
                 "type": "TEXT",
                 "variant": "HEADING_1"
               },
               {
-                "category": "BLOCK",
                 "components": [
                   {
-                    "category": "FIELD",
                     "hint": "",
                     "id": "input_001",
                     "inputType": "text",
@@ -9525,11 +9506,9 @@
                     "placeholder": "{{ t(signup:forms.collect_user_info.fields.username.placeholder) }}",
                     "ref": "username",
                     "required": true,
-                    "resourceType": "ELEMENT",
                     "type": "TEXT_INPUT"
                   },
                   {
-                    "category": "FIELD",
                     "hint": "",
                     "id": "input_002",
                     "inputType": "email",
@@ -9537,11 +9516,9 @@
                     "placeholder": "{{ t(signup:forms.collect_user_info.fields.email.placeholder) }}",
                     "ref": "email",
                     "required": true,
-                    "resourceType": "ELEMENT",
                     "type": "EMAIL_INPUT"
                   },
                   {
-                    "category": "FIELD",
                     "hint": "",
                     "id": "input_003",
                     "inputType": "text",
@@ -9549,21 +9526,17 @@
                     "placeholder": "{{ t(signup:forms.collect_user_info.fields.password.placeholder) }}",
                     "ref": "password",
                     "required": true,
-                    "resourceType": "ELEMENT",
                     "type": "PASSWORD_INPUT"
                   },
                   {
-                    "category": "ACTION",
                     "eventType": "SUBMIT",
                     "id": "action_001",
                     "label": "{{ t(signup:forms.collect_user_info.actions.submit.label) }}",
-                    "resourceType": "ELEMENT",
                     "type": "ACTION",
                     "variant": "PRIMARY"
                   }
                 ],
                 "id": "block_001",
-                "resourceType": "ELEMENT",
                 "type": "BLOCK"
               }
             ]
@@ -9602,7 +9575,7 @@
           "type": "TASK_EXECUTION",
           "layout": {
             "size": {
-              "width": 200,
+              "width": 212,
               "height": 113
             },
             "position": {
@@ -9615,7 +9588,7 @@
             "mode": "generate",
             "inputs": [
               {
-                "ref": "input_magic_link_dest",
+                "ref": "input_002",
                 "identifier": "email",
                 "type": "EMAIL_INPUT",
                 "required": true
@@ -9623,7 +9596,8 @@
             ]
           },
           "onSuccess": "send_email",
-          "onFailure": "prompt_email"
+          "onIncomplete": "prompt_credentials",
+          "onFailure": "prompt_credentials"
         },
         {
           "id": "send_email",
@@ -9646,7 +9620,8 @@
             "mode": "send"
           },
           "onSuccess": "prompt_email_sent",
-          "onFailure": "prompt_email"
+          "onIncomplete": "prompt_credentials",
+          "onFailure": "prompt_credentials"
         },
         {
           "id": "prompt_email_sent",
@@ -9654,61 +9629,43 @@
           "layout": {
             "size": {
               "width": 350,
-              "height": 400
+              "height": 422
             },
             "position": {
               "x": 1840,
-              "y": 183
+              "y": -193
             }
           },
           "meta": {
             "components": [
               {
-                "alt": "{{ t(signup:images.app_logo.alt) }}",
+                "resourceType": "ELEMENT",
                 "category": "DISPLAY",
+                "type": "IMAGE",
+                "src": "{{ meta(application.logoUrl) }}",
+                "alt": "{{ t(signup:images.app_logo.alt) }}",
                 "height": "60",
                 "id": "image_logo_sent",
-                "resourceType": "ELEMENT",
-                "src": "{{ meta(application.logoUrl) }}",
-                "type": "IMAGE",
                 "width": ""
               },
               {
+                "type": "TEXT",
                 "align": "center",
-                "category": "DISPLAY",
                 "id": "display_email_sent_heading",
                 "label": "{{ t(signup:forms.magicLink.emailSent.title) }}",
-                "resourceType": "ELEMENT",
-                "type": "TEXT",
                 "variant": "HEADING_1"
               },
               {
+                "type": "TEXT",
                 "align": "center",
-                "category": "DISPLAY",
                 "id": "display_email_sent_desc",
                 "label": "{{ t(signup:forms.magicLink.emailSent.description) }}",
-                "resourceType": "ELEMENT",
-                "type": "TEXT",
                 "variant": "BODY_1"
               }
             ]
           },
-          "prompts": [
-            {
-              "inputs": [
-                {
-                  "ref": "magic_link_token_input",
-                  "identifier": "token",
-                  "type": "HIDDEN",
-                  "required": true
-                }
-              ],
-              "action": {
-                "ref": "magic_link_action",
-                "nextNode": "verify_magic_link"
-              }
-            }
-          ]
+          "message": "{{ t(signup:forms.magicLink.emailSent.title) }}",
+          "next": "verify_magic_link"
         },
         {
           "id": "verify_magic_link",
@@ -9728,7 +9685,7 @@
             "mode": "verify"
           },
           "onSuccess": "provisioning",
-          "onFailure": "prompt_email"
+          "onFailure": "prompt_credentials"
         },
         {
           "id": "provisioning",
