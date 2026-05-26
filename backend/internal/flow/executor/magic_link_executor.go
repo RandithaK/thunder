@@ -189,7 +189,7 @@ func (m *magicLinkAuthExecutor) InitiateMagicLink(ctx *core.NodeContext,
 	magicLinkURL := m.getMagicLinkURL(ctx)
 
 	queryParams := map[string]string{
-		"executionId":   ctx.ExecutionID,
+		"id":            ctx.ExecutionID,
 		"applicationId": ctx.Application.ID,
 	}
 	if authID, ok := ctx.RuntimeData[common.RuntimeKeyAuthID]; ok && authID != "" {

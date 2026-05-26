@@ -179,7 +179,7 @@ func (suite *MagicLinkExecutorTestSuite) TestExecute_GenerateMode_Success_Authen
 
 	suite.mockMagicLinkService.On("GenerateMagicLink", ctx.Context, magicLinkTestUserID,
 		defaultExpiryMatcher(), map[string]string{
-			"executionId":   magicLinkTestExecutionID,
+			"id":            magicLinkTestExecutionID,
 			"applicationId": magicLinkTestAppID,
 		},
 		map[string]interface{}{"executionId": magicLinkTestExecutionID}, "").Return(
@@ -222,7 +222,7 @@ func (suite *MagicLinkExecutorTestSuite) TestExecute_GenerateMode_Success_WithAu
 
 	suite.mockMagicLinkService.On("GenerateMagicLink", ctx.Context, magicLinkTestUserID,
 		defaultExpiryMatcher(), map[string]string{
-			"executionId":   magicLinkTestExecutionID,
+			"id":            magicLinkTestExecutionID,
 			"applicationId": magicLinkTestAppID,
 			"authId":        "test-auth-id",
 		},
@@ -261,7 +261,7 @@ func (suite *MagicLinkExecutorTestSuite) TestExecute_GenerateMode_Success_Regist
 
 	suite.mockMagicLinkService.On("GenerateMagicLink", ctx.Context, magicLinkTestEmail,
 		defaultExpiryMatcher(), map[string]string{
-			"executionId":   magicLinkTestExecutionID,
+			"id":            magicLinkTestExecutionID,
 			"applicationId": magicLinkTestAppID,
 		},
 		map[string]interface{}{
@@ -307,7 +307,7 @@ func (suite *MagicLinkExecutorTestSuite) TestExecute_GenerateMode_Success_Regist
 
 	suite.mockMagicLinkService.On("GenerateMagicLink", ctx.Context, "+1234567890",
 		defaultExpiryMatcher(), map[string]string{
-			"executionId":   magicLinkTestExecutionID,
+			"id":            magicLinkTestExecutionID,
 			"applicationId": magicLinkTestAppID,
 		},
 		map[string]interface{}{
@@ -381,7 +381,7 @@ func (suite *MagicLinkExecutorTestSuite) TestExecute_GenerateMode_Success_WithCu
 	suite.mockMagicLinkService.On("GenerateMagicLink", ctx.Context, magicLinkTestUserID,
 		mock.MatchedBy(func(val int64) bool { return val == 600 }),
 		map[string]string{
-			"executionId":   magicLinkTestExecutionID,
+			"id":            magicLinkTestExecutionID,
 			"applicationId": magicLinkTestAppID,
 		},
 		map[string]interface{}{"executionId": magicLinkTestExecutionID}, "").Return(
@@ -422,7 +422,7 @@ func (suite *MagicLinkExecutorTestSuite) TestExecute_GenerateMode_Success_WithCu
 
 	suite.mockMagicLinkService.On("GenerateMagicLink", ctx.Context, magicLinkTestUserID,
 		defaultExpiryMatcher(), map[string]string{
-			"executionId":   magicLinkTestExecutionID,
+			"id":            magicLinkTestExecutionID,
 			"applicationId": magicLinkTestAppID,
 		},
 		map[string]interface{}{"executionId": magicLinkTestExecutionID},
@@ -455,7 +455,7 @@ func (suite *MagicLinkExecutorTestSuite) TestExecute_GenerateMode_Failure_Genera
 
 	suite.mockMagicLinkService.On("GenerateMagicLink", ctx.Context, magicLinkTestUserID,
 		defaultExpiryMatcher(), map[string]string{
-			"executionId":   magicLinkTestExecutionID,
+			"id":            magicLinkTestExecutionID,
 			"applicationId": magicLinkTestAppID,
 		},
 		map[string]interface{}{"executionId": magicLinkTestExecutionID}, "").Return(
@@ -495,7 +495,7 @@ func (suite *MagicLinkExecutorTestSuite) TestExecute_GenerateMode_Failure_Client
 		ctx.Context,
 		magicLinkTestUserID,
 		defaultExpiryMatcher(), map[string]string{
-			"executionId":   magicLinkTestExecutionID,
+			"id":            magicLinkTestExecutionID,
 			"applicationId": magicLinkTestAppID,
 		},
 		map[string]interface{}{"executionId": magicLinkTestExecutionID}, "").
@@ -567,7 +567,7 @@ func (suite *MagicLinkExecutorTestSuite) TestExecute_GenerateMode_Success_WithAu
 
 	suite.mockMagicLinkService.On("GenerateMagicLink", ctx.Context, magicLinkTestUserID,
 		defaultExpiryMatcher(), map[string]string{
-			"executionId":   magicLinkTestExecutionID,
+			"id":            magicLinkTestExecutionID,
 			"applicationId": magicLinkTestAppID,
 		},
 		map[string]interface{}{"executionId": magicLinkTestExecutionID}, "").Return(
@@ -1200,7 +1200,7 @@ func (suite *MagicLinkExecutorTestSuite) TestExecute_GenerateMode_RegistrationFl
 
 	suite.mockMagicLinkService.On("GenerateMagicLink", ctx.Context, magicLinkTestEmail,
 		defaultExpiryMatcher(), map[string]string{
-			"executionId":   magicLinkTestExecutionID,
+			"id":            magicLinkTestExecutionID,
 			"applicationId": magicLinkTestAppID,
 		},
 		map[string]interface{}{

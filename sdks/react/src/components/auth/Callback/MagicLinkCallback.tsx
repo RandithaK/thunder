@@ -108,7 +108,7 @@ export const MagicLinkCallback: FC<MagicLinkCallbackProps> = ({
 
       try {
         const urlParams: URLSearchParams = new URLSearchParams(window.location.search);
-        const executionId: string | null = urlParams.get('executionId');
+        const executionId: string | null = urlParams.get('id');
         const token: string | null = urlParams.get('token');
         const applicationId: string | null = urlParams.get('applicationId');
 
