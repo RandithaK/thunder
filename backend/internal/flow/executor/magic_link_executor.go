@@ -114,7 +114,7 @@ func (m *magicLinkAuthExecutor) GetExecutionPolicy(mode string) *core.ExecutionP
 	if mode == ExecutorModeVerify {
 		return &core.ExecutionPolicy{
 			SkipChallengeValidation: true,
-			AllowSegmentRestart:     true,
+			AllowSegmentRestart:     false,
 		}
 	}
 	return nil
