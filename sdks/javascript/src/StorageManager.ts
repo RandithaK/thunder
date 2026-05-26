@@ -150,22 +150,14 @@ class StorageManager<T> {
     const storeDataJSON: string = (await this.store.getData(resolvedKey)) ?? null;
     const storeData: TemporaryStore = storeDataJSON ? JSON.parse(storeDataJSON) : {};
 
-    const pkceData: Record<string, string> = {};
     if (StorageManager.isLocalStorageAvailable()) {
-      const prefix = `thunderid_pkce_${resolvedKey}_`;
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (k && k.startsWith(prefix)) {
-          const pkceKey = k.slice(prefix.length);
-          const value = localStorage.getItem(k);
-          if (value !== null) {
-            pkceData[pkceKey] = value;
-          }
-        }
+      const pkceValue = localStorage.getItem(`thunderid_pkce_${resolvedKey}_pkce_code_verifier`);
+      if (pkceValue !== null) {
+        storeData['pkce_code_verifier'] = pkceValue;
       }
     }
 
-    return {...storeData, ...pkceData};
+    return storeData;
   }
 
   public async getPersistedData(userId?: string): Promise<TemporaryStore> {
@@ -215,14 +207,9 @@ class StorageManager<T> {
 
     if (StorageManager.isLocalStorageAvailable()) {
       const prefix = `thunderid_pkce_${resolvedKey}_`;
-      const keysToRemove: string[] = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (k && k.startsWith(prefix)) {
-          keysToRemove.push(k);
-        }
-      }
-      keysToRemove.forEach((k) => localStorage.removeItem(k));
+      Object.keys(localStorage)
+        .filter((storageKey) => storageKey.startsWith(prefix))
+        .forEach((storageKey) => localStorage.removeItem(storageKey));
     }
   }
 
