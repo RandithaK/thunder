@@ -2073,6 +2073,14 @@ const translations = {
     'passkey.signin.description': 'Use your passkey to securely sign in to your account without a password.',
     'passkey.register.heading': 'Register Passkey',
     'passkey.register.description': 'Create a passkey to securely sign in to your account without a password.',
+    // MagicLink authentication
+    'forms.magicLink.title': 'Sign In with Magic Link',
+    'forms.magicLink.fields.email.label': 'Email Address',
+    'forms.magicLink.fields.email.placeholder': 'Enter your email address',
+    'forms.magicLink.actions.submit.label': 'Send Magic Link',
+    'forms.magicLink.emailSent.title': 'Check Your Email',
+    'forms.magicLink.emailSent.description':
+      'We sent you a verification link. Please check your inbox and click the link to continue.',
   },
 
   // ============================================================================
@@ -2090,6 +2098,10 @@ const translations = {
     'passkey.button.create': 'Create Passkey',
     'passkey.registering': 'Creating passkey...',
     'errors.passkey.failed': 'Failed to create passkey. Please try again.',
+    // MagicLink registration translations
+    'forms.magicLink.emailSent.title': 'Check Your Email',
+    'forms.magicLink.emailSent.description':
+      'We sent you a verification link via email. Please check your inbox and click the link to continue.',
   },
 
   // ============================================================================

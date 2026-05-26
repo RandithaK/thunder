@@ -119,7 +119,13 @@
       "forms.credentials.links.forgot_password.prefix": "Forgot password?",
       "forms.credentials.links.forgot_password.label": "Reset",
       "forms.credentials.links.sign_up.prefix": "Don't have an account?",
-      "forms.credentials.links.sign_up.label": "Sign up"
+      "forms.credentials.links.sign_up.label": "Sign up",
+      "forms.magicLink.title": "Sign In with Magic Link",
+      "forms.magicLink.fields.email.label": "Email Address",
+      "forms.magicLink.fields.email.placeholder": "Enter your email address",
+      "forms.magicLink.actions.submit.label": "Send Magic Link",
+      "forms.magicLink.emailSent.title": "Check Your Email",
+      "forms.magicLink.emailSent.description": "We sent you a verification link. Please check your inbox and click the link to continue."
     },
     "signup": {
       "images.app_logo.alt": "Application logo",
@@ -235,7 +241,9 @@
       "forms.otp.description": "Enter the verification code sent to your phone",
       "forms.otp.fields.otp.label": "Verification Code",
       "forms.otp.fields.otp.placeholder": "Enter code",
-      "forms.otp.actions.submit.label": "Verify"
+      "forms.otp.actions.submit.label": "Verify",
+      "forms.magicLink.emailSent.title": "Check Your Email",
+      "forms.magicLink.emailSent.description": "We sent you a verification link via email. Please check your inbox and click the link to continue."
     },
     "recovery": {
       "forms.username.title": "Password Recovery",
