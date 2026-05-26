@@ -129,7 +129,6 @@ class StorageManager<T> {
     }
   }
 
-
   public async setSessionData(sessionData: Partial<SessionData>, userId?: string): Promise<void> {
     this.setDataInBulk(this.resolveKey(Stores.SessionData, userId), sessionData);
   }
@@ -168,7 +167,6 @@ class StorageManager<T> {
 
     return {...storeData, ...pkceData};
   }
-
 
   public async getPersistedData(userId?: string): Promise<TemporaryStore> {
     return JSON.parse((await this.store.getData(this.resolveKey(Stores.PersistedData, userId))) ?? null);
