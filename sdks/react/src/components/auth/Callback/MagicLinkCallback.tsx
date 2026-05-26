@@ -115,7 +115,11 @@ export const MagicLinkCallback: FC<MagicLinkCallbackProps> = ({
         clearTokenFromUrl();
 
         if (!executionId || !token) {
-          throw new Error('Missing executionId or token in Magic Link URL');
+          const error = new Error('Missing executionId or token in Magic Link URL');
+          // eslint-disable-next-line no-console
+          console.error('Magic Link callback error:', error);
+          redirectWithError(error);
+          return;
         }
 
         const response: EmbeddedSignInFlowResponseV2 = (await signIn({
@@ -159,7 +163,11 @@ export const MagicLinkCallback: FC<MagicLinkCallbackProps> = ({
 
         if (response.flowStatus === EmbeddedSignInFlowStatusV2.Error) {
           const failureReason: string | undefined = (response as any)?.failureReason;
-          throw new Error(failureReason || 'Magic Link authentication failed. Please try again.');
+          const error = new Error(failureReason || 'Magic Link authentication failed. Please try again.');
+          // eslint-disable-next-line no-console
+          console.error('Magic Link callback error:', error);
+          redirectWithError(error);
+          return;
         }
 
         const nextExecutionId: string = response.executionId || executionId;
