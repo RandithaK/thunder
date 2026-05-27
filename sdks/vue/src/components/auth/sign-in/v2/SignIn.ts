@@ -154,7 +154,7 @@ const SignIn: Component = defineComponent({
     const clearFlowState = (): void => {
       persistExecutionId(null);
       isFlowInitialized.value = false;
-      sessionStorage.removeItem(AUTH_ID_STORAGE_KEY);
+      localStorage.removeItem(AUTH_ID_STORAGE_KEY);
       isTimeoutDisabled.value = false;
       oauthCodeProcessedFlag.value = false;
     };
@@ -212,7 +212,7 @@ const SignIn: Component = defineComponent({
       oauthCodeProcessedFlag.value = false;
 
       if (urlParams.authId) {
-        sessionStorage.setItem(AUTH_ID_STORAGE_KEY, urlParams.authId);
+        localStorage.setItem(AUTH_ID_STORAGE_KEY, urlParams.authId);
       }
 
       const effectiveApplicationId: string | null | undefined = applicationId || urlParams.applicationId;
@@ -246,7 +246,7 @@ const SignIn: Component = defineComponent({
           const redirectURL: string | undefined = (response.data as any)?.redirectURL || (response as any)?.redirectURL;
           if (redirectURL && window?.location) {
             if (response.executionId) persistExecutionId(response.executionId);
-            if (urlParams.authId) sessionStorage.setItem(AUTH_ID_STORAGE_KEY, urlParams.authId);
+            if (urlParams.authId) localStorage.setItem(AUTH_ID_STORAGE_KEY, urlParams.authId);
             initiateOAuthRedirect(redirectURL);
             return;
           }
@@ -346,7 +346,7 @@ const SignIn: Component = defineComponent({
           if (redirectURL && window?.location) {
             if (response.executionId) persistExecutionId(response.executionId);
             const urlParams: UrlParams = getUrlParams();
-            if (urlParams.authId) sessionStorage.setItem(AUTH_ID_STORAGE_KEY, urlParams.authId);
+            if (urlParams.authId) localStorage.setItem(AUTH_ID_STORAGE_KEY, urlParams.authId);
             initiateOAuthRedirect(redirectURL);
             return;
           }
@@ -396,7 +396,7 @@ const SignIn: Component = defineComponent({
           isSubmitting.value = false;
           persistExecutionId(null);
           isFlowInitialized.value = false;
-          sessionStorage.removeItem(AUTH_ID_STORAGE_KEY);
+          localStorage.removeItem(AUTH_ID_STORAGE_KEY);
           cleanupOAuthUrlParams();
 
           emit('success', {
@@ -550,7 +550,7 @@ const SignIn: Component = defineComponent({
       const urlParams: UrlParams = getUrlParams();
 
       if (urlParams.authId) {
-        sessionStorage.setItem(AUTH_ID_STORAGE_KEY, urlParams.authId);
+        localStorage.setItem(AUTH_ID_STORAGE_KEY, urlParams.authId);
       }
     });
 

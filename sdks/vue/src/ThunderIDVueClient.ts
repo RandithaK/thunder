@@ -307,7 +307,7 @@ class ThunderIDVueClient<T extends ThunderIDVueConfig = ThunderIDVueConfig> exte
       ) {
         const configData: any = this.getStorageManager().getConfigData();
         const authIdFromUrl: string | null = new URL(window.location.href).searchParams.get('authId');
-        const authIdFromStorage: string | null = sessionStorage.getItem('thunderid_auth_id');
+        const authIdFromStorage: string | null = localStorage.getItem('thunderid_auth_id');
         const authId: string = authIdFromUrl || authIdFromStorage || '';
         const baseUrlFromStorage: string | null = sessionStorage.getItem('thunderid_base_url');
         const baseUrl: string = configData?.baseUrl || baseUrlFromStorage || '';
@@ -372,11 +372,11 @@ class ThunderIDVueClient<T extends ThunderIDVueConfig = ThunderIDVueConfig> exte
     const baseUrl: string = configData?.baseUrl;
 
     const authIdFromUrl: string | null = new URL(window.location.href).searchParams.get('authId');
-    const authIdFromStorage: string | null = sessionStorage.getItem('thunderid_auth_id');
+    const authIdFromStorage: string | null = localStorage.getItem('thunderid_auth_id');
     const authId: string = authIdFromUrl || authIdFromStorage || '';
 
     if (authIdFromUrl && !authIdFromStorage) {
-      sessionStorage.setItem('thunderid_auth_id', authIdFromUrl);
+      localStorage.setItem('thunderid_auth_id', authIdFromUrl);
     }
 
     return executeEmbeddedSignUpFlowV2({
