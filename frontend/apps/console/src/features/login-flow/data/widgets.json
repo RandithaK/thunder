@@ -1083,12 +1083,12 @@
       "data": {
         "__generationMeta__": {
           "replacers": [
-            { "key": "EMAIL_VIEW_ID", "type": "ID" },
-            { "key": "MAGIC_GENERATE_EXECUTOR", "type": "ID" },
-            { "key": "EMAIL_SEND_EXECUTOR", "type": "ID" },
-            { "key": "EMAIL_SENT_PROMPT_ID", "type": "ID" },
-            { "key": "MAGIC_VERIFY_EXECUTOR", "type": "ID" },
-            { "key": "AUTH_ASSERT_EXECUTOR_ID", "type": "ID" } 
+            {"key": "EMAIL_VIEW_ID", "type": "ID"},
+            {"key": "MAGIC_GENERATE_EXECUTOR", "type": "ID"},
+            {"key": "EMAIL_SEND_EXECUTOR", "type": "ID"},
+            {"key": "EMAIL_SENT_PROMPT_ID", "type": "ID"},
+            {"key": "MAGIC_VERIFY_EXECUTOR", "type": "ID"},
+            {"key": "AUTH_ASSERT_EXECUTOR_ID", "type": "ID"}
           ]
         },
         "steps": [
@@ -1125,8 +1125,8 @@
           {
             "id": "{{EMAIL_VIEW_ID}}",
             "type": "VIEW",
-            "size": { "width": 350, "height": 300 },
-            "position": { "x": 650, "y": 100 },
+            "size": {"width": 350, "height": 300},
+            "position": {"x": 650, "y": 100},
             "data": {
               "components": [
                 {
@@ -1172,8 +1172,8 @@
           {
             "id": "{{MAGIC_GENERATE_EXECUTOR}}",
             "type": "TASK_EXECUTION",
-            "size": { "width": 200, "height": 113 },
-            "position": { "x": 650, "y": 450 },
+            "size": {"width": 200, "height": 113},
+            "position": {"x": 650, "y": 450},
             "data": {
               "action": {
                 "type": "EXECUTOR",
@@ -1189,8 +1189,8 @@
           {
             "id": "{{EMAIL_SEND_EXECUTOR}}",
             "type": "TASK_EXECUTION",
-            "size": { "width": 200, "height": 113 },
-            "position": { "x": 650, "y": 600 },
+            "size": {"width": 200, "height": 113},
+            "position": {"x": 650, "y": 600},
             "data": {
               "action": {
                 "type": "EXECUTOR",
@@ -1209,8 +1209,8 @@
           {
             "id": "{{EMAIL_SENT_PROMPT_ID}}",
             "type": "VIEW",
-            "size": { "width": 350, "height": 400 },
-            "position": { "x": 1000, "y": 600 },
+            "size": {"width": 350, "height": 400},
+            "position": {"x": 1000, "y": 600},
             "data": {
               "prompts": [
                 {
@@ -1263,8 +1263,8 @@
           {
             "id": "{{MAGIC_VERIFY_EXECUTOR}}",
             "type": "TASK_EXECUTION",
-            "size": { "width": 200, "height": 113 },
-            "position": { "x": 650, "y": 750 },
+            "size": {"width": 200, "height": 113},
+            "position": {"x": 650, "y": 750},
             "data": {
               "action": {
                 "type": "EXECUTOR",
@@ -1280,8 +1280,8 @@
           {
             "id": "{{AUTH_ASSERT_EXECUTOR_ID}}",
             "type": "TASK_EXECUTION",
-            "size": { "width": 200, "height": 113 },
-            "position": { "x": 650, "y": 900 },
+            "size": {"width": 200, "height": 113},
+            "position": {"x": 650, "y": 900},
             "data": {
               "action": {
                 "type": "EXECUTOR",
