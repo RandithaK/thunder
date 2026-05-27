@@ -55,7 +55,7 @@ describe('MagicLinkProperties', () => {
       },
     };
 
-    render(<MagicLinkProperties resource={resource} onChange={mockOnChange} />);
+    render(<MagicLinkProperties resource={resource as any} onChange={mockOnChange} />);
 
     expect(screen.getByText('Configure the Magic Link step behavior.')).toBeInTheDocument();
     expect(screen.getByText('Mode')).toBeInTheDocument();
@@ -72,7 +72,7 @@ describe('MagicLinkProperties', () => {
       },
     };
 
-    render(<MagicLinkProperties resource={resource} onChange={mockOnChange} />);
+    render(<MagicLinkProperties resource={resource as any} onChange={mockOnChange} />);
 
     expect(screen.getByRole('combobox')).toHaveTextContent('Verify Magic Link');
   });
@@ -86,7 +86,7 @@ describe('MagicLinkProperties', () => {
       },
     };
 
-    render(<MagicLinkProperties resource={resource} onChange={mockOnChange} />);
+    render(<MagicLinkProperties resource={resource as any} onChange={mockOnChange} />);
 
     expect(screen.getByRole('combobox')).toHaveTextContent('Select an action mode');
   });
@@ -106,7 +106,7 @@ describe('MagicLinkProperties', () => {
       },
     };
 
-    render(<MagicLinkProperties resource={resource} onChange={mockOnChange} />);
+    render(<MagicLinkProperties resource={resource as any} onChange={mockOnChange} />);
 
     const selectButton = screen.getByRole('combobox');
     await user.click(selectButton);
