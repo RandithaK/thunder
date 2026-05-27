@@ -17,7 +17,7 @@
 
 import {render, waitFor} from '@testing-library/react';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
-import {MagicLinkCallback} from './MagicLinkCallback';
+import {MagicLinkCallback} from '../MagicLinkCallback';
 
 const mockSignIn: any = vi.fn();
 const mockSetTemporaryDataParameter: any = vi.fn();
