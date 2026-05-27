@@ -1319,4 +1319,3 @@ func (suite *MagicLinkExecutorTestSuite) TestGetExecutionPolicy() {
 	policyUnknown := suite.executor.GetExecutionPolicy("unknown")
 	suite.Nil(policyUnknown)
 }
-

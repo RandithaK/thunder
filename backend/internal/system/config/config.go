@@ -37,6 +37,7 @@ import (
 )
 
 const schemeHTTPS = "https"
+const localhost = "localhost"
 
 // SecurityConfig holds the security-related configuration details.
 //
@@ -639,7 +640,7 @@ func (c *TrustedIssuerConfig) Validate() error {
 		return nil
 	case "http":
 		host := parsed.Hostname()
-		if host == "localhost" || host == "127.0.0.1" || host == "::1" {
+		if host == localhost || host == "127.0.0.1" || host == "::1" {
 			return nil
 		}
 		return fmt.Errorf(

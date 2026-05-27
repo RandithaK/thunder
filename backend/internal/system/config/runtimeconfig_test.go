@@ -123,7 +123,7 @@ func (suite *RuntimeConfigTestSuite) TestInitializeServerRuntime_InvalidLoginPat
 	// Setup a config with an intentionally broken LoginPath
 	config := &Config{}
 	config.GateClient.Scheme = schemeHTTPS
-	config.GateClient.Hostname = "localhost"
+	config.GateClient.Hostname = localhost
 	config.GateClient.Port = 8443
 	config.GateClient.LoginPath = "/login%ZZ"
 
@@ -143,7 +143,7 @@ func (suite *RuntimeConfigTestSuite) TestInitializeServerRuntime_InvalidMagicLin
 	// Setup a config with an intentionally broken MagicLinkPath
 	config := &Config{}
 	config.GateClient.Scheme = schemeHTTPS
-	config.GateClient.Hostname = "localhost"
+	config.GateClient.Hostname = localhost
 	config.GateClient.Port = 8443
 	config.GateClient.MagicLinkPath = "/magic%ZZ"
 
@@ -158,4 +158,3 @@ func (suite *RuntimeConfigTestSuite) TestInitializeServerRuntime_InvalidMagicLin
 	assert.Equal(suite.T(), "/magiclink", runtime.GateClientMagicLinkURL.Path)
 	assert.Equal(suite.T(), "https://localhost:8443/magiclink", runtime.GateClientMagicLinkURL.String())
 }
-
