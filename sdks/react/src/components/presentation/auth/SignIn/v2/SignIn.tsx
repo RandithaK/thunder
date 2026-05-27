@@ -301,7 +301,7 @@ const SignIn: FC<SignInProps> = ({
     setExecutionId(null);
     await setChallengeToken(null);
     setIsFlowInitialized(false);
-    sessionStorage.removeItem('thunderid_auth_id');
+    localStorage.removeItem('thunderid_auth_id');
     setIsTimeoutDisabled(false);
     // Reset refs to allow new flows to start properly
     oauthCodeProcessedRef.current = false;
@@ -330,7 +330,7 @@ const SignIn: FC<SignInProps> = ({
    */
   const handleAuthId = (authId: string | null): void => {
     if (authId) {
-      sessionStorage.setItem('thunderid_auth_id', authId);
+      localStorage.setItem('thunderid_auth_id', authId);
     }
   };
 
@@ -713,7 +713,7 @@ const SignIn: FC<SignInProps> = ({
         await setChallengeToken(null);
         setIsFlowInitialized(false);
         sessionStorage.removeItem('thunderid_execution_id');
-        sessionStorage.removeItem('thunderid_auth_id');
+        localStorage.removeItem('thunderid_auth_id');
 
         // Clean up OAuth URL params before redirect
         cleanupOAuthUrlParams(true);

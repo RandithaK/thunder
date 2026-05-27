@@ -237,8 +237,6 @@ const (
 	RuntimeKeySelectedAuthClass = "selected_auth_class"
 	// RuntimeKeyAllowedLoginOptions holds the space-separated action refs allowed on a LOGIN_OPTIONS node.
 	RuntimeKeyAllowedLoginOptions = "allowed_login_options"
-	// RuntimeKeyAuthID holds the authorization request ID (authId) for callback flows.
-	RuntimeKeyAuthID = "authId"
 )
 
 // TODO: Define a go type for InputType when formalizing input types

@@ -145,7 +145,7 @@ export const MagicLinkCallback: FC<MagicLinkCallbackProps> = ({
           const redirectUrl: string | undefined = (response as any)?.redirectUrl || (response as any)?.redirect_uri;
 
           sessionStorage.removeItem('thunderid_execution_id');
-          sessionStorage.removeItem('thunderid_auth_id');
+          localStorage.removeItem('thunderid_auth_id');
 
           onSuccess?.({
             redirectUrl,

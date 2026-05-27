@@ -34,7 +34,6 @@ import (
 
 // authRequestContext holds OAuth authorization request information.
 type authRequestContext struct {
-	AuthID          string
 	OAuthParameters model.OAuthParameters
 }
 
@@ -68,15 +67,9 @@ func (authzRS *authorizationRequestStore) AddRequest(ctx context.Context, value 
 		return "", fmt.Errorf("failed to get database client: %w", err)
 	}
 
-	var key string
-	if value.AuthID != "" {
-		key = value.AuthID
-	} else {
-		var err error
-		key, err = utils.GenerateUUIDv7()
-		if err != nil {
-			return "", fmt.Errorf("failed to generate UUID: %w", err)
-		}
+	key, err := utils.GenerateUUIDv7()
+	if err != nil {
+		return "", fmt.Errorf("failed to generate UUID: %w", err)
 	}
 	// Calculate expiry based on current time
 	requestInitiatedTime := time.Now()

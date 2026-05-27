@@ -82,7 +82,7 @@ type MagicLinkExecutorTestSuite struct {
 	mockMagicLinkService *magiclinkmock.MagicLinkAuthnServiceInterfaceMock
 	mockFlowFactory      *coremock.FlowFactoryInterfaceMock
 	mockEntityProvider   *entityprovidermock.EntityProviderInterfaceMock
-	executor             *magicLinkAuthExecutor
+	executor             *magicLinkExecutor
 }
 
 func TestMagicLinkExecutorSuite(t *testing.T) {
@@ -201,47 +201,6 @@ func (suite *MagicLinkExecutorTestSuite) TestExecute_GenerateMode_Success_Authen
 	suite.mockMagicLinkService.AssertExpectations(suite.T())
 }
 
-func (suite *MagicLinkExecutorTestSuite) TestExecute_GenerateMode_Success_WithAuthID() {
-	ctx := &core.NodeContext{
-		Context:      context.Background(),
-		ExecutionID:  magicLinkTestExecutionID,
-		FlowType:     common.FlowTypeAuthentication,
-		ExecutorMode: ExecutorModeGenerate,
-		Application:  appmodel.Application{ID: magicLinkTestAppID},
-		UserInputs: map[string]string{
-			userAttributeEmail: magicLinkTestEmail,
-		},
-		RuntimeData: map[string]string{
-			common.RuntimeKeyAuthID: "test-auth-id",
-		},
-	}
-
-	suite.mockEntityProvider.On("IdentifyEntity", map[string]interface{}{
-		userAttributeEmail: magicLinkTestEmail,
-	}).Return(new(magicLinkTestUserID), nil)
-
-	suite.mockMagicLinkService.On("GenerateMagicLink", ctx.Context, magicLinkTestUserID,
-		defaultExpiryMatcher(), map[string]string{
-			"id":            magicLinkTestExecutionID,
-			"applicationId": magicLinkTestAppID,
-			"authId":        "test-auth-id",
-		},
-		map[string]interface{}{"executionId": magicLinkTestExecutionID}, "").Return(
-		"https://example.com/verify?id=flow-123&token=jwt-token-123&authId=test-auth-id", nil)
-
-	resp, err := suite.executor.Execute(ctx)
-
-	assert.NoError(suite.T(), err)
-	assert.NotNil(suite.T(), resp)
-	assert.Equal(suite.T(), common.ExecComplete, resp.Status)
-	templateData, ok := resp.ForwardedData[common.ForwardedDataKeyTemplateData].(map[string]interface{})
-	assert.True(suite.T(), ok, "Template data should be present in ForwardedData")
-	expectedURL := "https://example.com/verify?id=flow-123&token=jwt-token-123&authId=test-auth-id"
-	assert.Equal(suite.T(), expectedURL, templateData["magicLink"])
-	suite.mockEntityProvider.AssertExpectations(suite.T())
-	suite.mockMagicLinkService.AssertExpectations(suite.T())
-}
-
 func (suite *MagicLinkExecutorTestSuite) TestExecute_GenerateMode_Success_RegistrationFlow_NewUser() {
 	ctx := &core.NodeContext{
 		Context:      context.Background(),
@@ -260,10 +219,7 @@ func (suite *MagicLinkExecutorTestSuite) TestExecute_GenerateMode_Success_Regist
 	}).Return(nil, entityprovider.NewEntityProviderError(entityprovider.ErrorCodeEntityNotFound, "", ""))
 
 	suite.mockMagicLinkService.On("GenerateMagicLink", ctx.Context, magicLinkTestEmail,
-		defaultExpiryMatcher(), map[string]string{
-			"id":            magicLinkTestExecutionID,
-			"applicationId": magicLinkTestAppID,
-		},
+		defaultExpiryMatcher(), map[string]string{"id": magicLinkTestExecutionID, "applicationId": magicLinkTestAppID},
 		map[string]interface{}{
 			"executionId": magicLinkTestExecutionID,
 		}, "").Return(
@@ -306,10 +262,7 @@ func (suite *MagicLinkExecutorTestSuite) TestExecute_GenerateMode_Success_Regist
 	}).Return(nil, entityprovider.NewEntityProviderError(entityprovider.ErrorCodeEntityNotFound, "", ""))
 
 	suite.mockMagicLinkService.On("GenerateMagicLink", ctx.Context, "+1234567890",
-		defaultExpiryMatcher(), map[string]string{
-			"id":            magicLinkTestExecutionID,
-			"applicationId": magicLinkTestAppID,
-		},
+		defaultExpiryMatcher(), map[string]string{"id": magicLinkTestExecutionID, "applicationId": magicLinkTestAppID},
 		map[string]interface{}{
 			"executionId": magicLinkTestExecutionID,
 		}, "").Return(
@@ -380,10 +333,7 @@ func (suite *MagicLinkExecutorTestSuite) TestExecute_GenerateMode_Success_WithCu
 
 	suite.mockMagicLinkService.On("GenerateMagicLink", ctx.Context, magicLinkTestUserID,
 		mock.MatchedBy(func(val int64) bool { return val == 600 }),
-		map[string]string{
-			"id":            magicLinkTestExecutionID,
-			"applicationId": magicLinkTestAppID,
-		},
+		map[string]string{"id": magicLinkTestExecutionID, "applicationId": magicLinkTestAppID},
 		map[string]interface{}{"executionId": magicLinkTestExecutionID}, "").Return(
 		"https://example.com/verify?id=flow-123&token=jwt-token-123", nil)
 
@@ -421,10 +371,7 @@ func (suite *MagicLinkExecutorTestSuite) TestExecute_GenerateMode_Success_WithCu
 	}).Return(new(magicLinkTestUserID), nil)
 
 	suite.mockMagicLinkService.On("GenerateMagicLink", ctx.Context, magicLinkTestUserID,
-		defaultExpiryMatcher(), map[string]string{
-			"id":            magicLinkTestExecutionID,
-			"applicationId": magicLinkTestAppID,
-		},
+		defaultExpiryMatcher(), map[string]string{"id": magicLinkTestExecutionID, "applicationId": magicLinkTestAppID},
 		map[string]interface{}{"executionId": magicLinkTestExecutionID},
 		magicLinkTestMagicLinkURL).Return(magicLinkTestMagicLinkURL+"?id=flow-123&token=jwt-token-123", nil)
 
@@ -566,10 +513,7 @@ func (suite *MagicLinkExecutorTestSuite) TestExecute_GenerateMode_Success_WithAu
 	suite.executor.ExecutorInterface = mockExec
 
 	suite.mockMagicLinkService.On("GenerateMagicLink", ctx.Context, magicLinkTestUserID,
-		defaultExpiryMatcher(), map[string]string{
-			"id":            magicLinkTestExecutionID,
-			"applicationId": magicLinkTestAppID,
-		},
+		defaultExpiryMatcher(), map[string]string{"id": magicLinkTestExecutionID, "applicationId": magicLinkTestAppID},
 		map[string]interface{}{"executionId": magicLinkTestExecutionID}, "").Return(
 		"https://example.com/verify?id=flow-123&token=jwt-token-123", nil)
 
