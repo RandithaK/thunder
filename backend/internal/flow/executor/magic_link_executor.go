@@ -109,7 +109,7 @@ func (m *magicLinkExecutor) Execute(ctx *core.NodeContext) (*common.ExecutorResp
 }
 
 // GetExecutionPolicy returns the execution policy for the given mode.
-// The verify mode skips challenge token validation because the invite token itself serves as the challenge.
+// The verify mode skips challenge token validation because the magicLink token itself serves as the challenge.
 func (m *magicLinkExecutor) GetExecutionPolicy(mode string) *core.ExecutionPolicy {
 	if mode == ExecutorModeVerify {
 		return &core.ExecutionPolicy{
