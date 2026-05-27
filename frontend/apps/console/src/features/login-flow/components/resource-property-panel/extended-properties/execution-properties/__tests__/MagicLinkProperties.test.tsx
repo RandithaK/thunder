@@ -20,6 +20,7 @@ import {render, screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {describe, it, expect, vi, beforeEach} from 'vitest';
 import MagicLinkProperties from '../MagicLinkProperties';
+import type {Resource} from '@/features/flows/models/resources';
 
 // Mock react-i18next
 vi.mock('react-i18next', () => ({
@@ -32,7 +33,7 @@ vi.mock('react-i18next', () => ({
         'flows:core.executions.magicLink.mode.generate': 'Generate Magic Link',
         'flows:core.executions.magicLink.mode.verify': 'Verify Magic Link',
       };
-      return translations[key] || defaultValue || key;
+      return translations[key] ?? defaultValue ?? key;
     },
   }),
 }));
@@ -55,7 +56,7 @@ describe('MagicLinkProperties', () => {
       },
     };
 
-    render(<MagicLinkProperties resource={resource as any} onChange={mockOnChange} />);
+    render(<MagicLinkProperties resource={resource as unknown as Resource} onChange={mockOnChange} />);
 
     expect(screen.getByText('Configure the Magic Link step behavior.')).toBeInTheDocument();
     expect(screen.getByText('Mode')).toBeInTheDocument();
@@ -72,7 +73,7 @@ describe('MagicLinkProperties', () => {
       },
     };
 
-    render(<MagicLinkProperties resource={resource as any} onChange={mockOnChange} />);
+    render(<MagicLinkProperties resource={resource as unknown as Resource} onChange={mockOnChange} />);
 
     expect(screen.getByRole('combobox')).toHaveTextContent('Verify Magic Link');
   });
@@ -86,7 +87,7 @@ describe('MagicLinkProperties', () => {
       },
     };
 
-    render(<MagicLinkProperties resource={resource as any} onChange={mockOnChange} />);
+    render(<MagicLinkProperties resource={resource as unknown as Resource} onChange={mockOnChange} />);
 
     expect(screen.getByRole('combobox')).toHaveTextContent('Select an action mode');
   });
@@ -106,7 +107,7 @@ describe('MagicLinkProperties', () => {
       },
     };
 
-    render(<MagicLinkProperties resource={resource as any} onChange={mockOnChange} />);
+    render(<MagicLinkProperties resource={resource as unknown as Resource} onChange={mockOnChange} />);
 
     const selectButton = screen.getByRole('combobox');
     await user.click(selectButton);
