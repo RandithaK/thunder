@@ -1306,3 +1306,17 @@ func (suite *MagicLinkExecutorTestSuite) TestValidateMagicLinkToken_MissingJTI()
 	suite.Equal(failureReasonInvalidMagicLink, failure)
 	suite.Nil(err)
 }
+
+func (suite *MagicLinkExecutorTestSuite) TestGetExecutionPolicy() {
+	policyVerify := suite.executor.GetExecutionPolicy(ExecutorModeVerify)
+	suite.NotNil(policyVerify)
+	suite.True(policyVerify.SkipChallengeValidation)
+	suite.False(policyVerify.AllowSegmentRestart)
+
+	policyGenerate := suite.executor.GetExecutionPolicy(ExecutorModeGenerate)
+	suite.Nil(policyGenerate)
+
+	policyUnknown := suite.executor.GetExecutionPolicy("unknown")
+	suite.Nil(policyUnknown)
+}
+

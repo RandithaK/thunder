@@ -138,3 +138,24 @@ func (suite *RuntimeConfigTestSuite) TestInitializeServerRuntime_InvalidLoginPat
 	assert.Equal(suite.T(), "/signin", runtime.GateClientLoginURL.Path)
 	assert.Equal(suite.T(), "https://localhost:8443/signin", runtime.GateClientLoginURL.String())
 }
+
+func (suite *RuntimeConfigTestSuite) TestInitializeServerRuntime_InvalidMagicLinkPathFallback() {
+	// Setup a config with an intentionally broken MagicLinkPath
+	config := &Config{}
+	config.GateClient.Scheme = schemeHTTPS
+	config.GateClient.Hostname = "localhost"
+	config.GateClient.Port = 8443
+	config.GateClient.MagicLinkPath = "/magic%ZZ"
+
+	err := InitializeServerRuntime("/test/thunderid/home", config)
+
+	assert.NoError(suite.T(), err)
+
+	runtime := GetServerRuntime()
+	assert.NotNil(suite.T(), runtime)
+	assert.NotNil(suite.T(), runtime.GateClientMagicLinkURL)
+
+	assert.Equal(suite.T(), "/magiclink", runtime.GateClientMagicLinkURL.Path)
+	assert.Equal(suite.T(), "https://localhost:8443/magiclink", runtime.GateClientMagicLinkURL.String())
+}
+
