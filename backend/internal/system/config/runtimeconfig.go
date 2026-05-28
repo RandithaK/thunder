@@ -50,7 +50,7 @@ func InitializeServerRuntime(serverHome string, config *Config) error {
 		}
 		magicLinkPath := config.GateClient.MagicLinkPath
 		if strings.TrimSpace(magicLinkPath) == "" {
-			magicLinkPath = "/magiclink"
+			magicLinkPath = "/callback"
 		}
 
 		portStr := strconv.Itoa(config.GateClient.Port)
@@ -74,11 +74,11 @@ func InitializeServerRuntime(serverHome string, config *Config) error {
 		parsedMagicLinkPath, err := url.Parse(magicLinkPath)
 		if err != nil || parsedMagicLinkPath == nil {
 			log.GetLogger().Warn(
-				"Invalid gate client magic link path configured. Falling back to default '/magiclink'",
+				"Invalid gate client magic link path configured. Falling back to default '/callback'",
 				log.String("configuredPath", magicLinkPath),
 				log.Error(err),
 			)
-			parsedMagicLinkPath = &url.URL{Path: "/magiclink"}
+			parsedMagicLinkPath = &url.URL{Path: "/callback"}
 		}
 
 		parsedURL := baseURL.ResolveReference(parsedPath)

@@ -137,6 +137,7 @@ export {BaseAcceptInvite, AcceptInvite} from './components/presentation/auth/Acc
 
 export * from './components/auth/Callback/Callback';
 export * from './components/auth/Callback/MagicLinkCallback';
+export * from './components/auth/Callback/OAuthCallback';
 
 // Sign-In Options
 export {default as IdentifierFirst} from './components/presentation/auth/SignIn/v1/options/IdentifierFirst';

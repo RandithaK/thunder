@@ -755,7 +755,7 @@ func LoadConfig(configPath string, defaultPath string, serverHome string) (*Conf
 			cfg.GateClient.ErrorPath = urlpath.Join(cfg.GateClient.Path, "error")
 		}
 		if cfg.GateClient.MagicLinkPath == "" {
-			cfg.GateClient.MagicLinkPath = urlpath.Join(cfg.GateClient.Path, "magiclink")
+			cfg.GateClient.MagicLinkPath = urlpath.Join(cfg.GateClient.Path, "callback")
 		}
 	}
 

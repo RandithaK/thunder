@@ -155,6 +155,6 @@ func (suite *RuntimeConfigTestSuite) TestInitializeServerRuntime_InvalidMagicLin
 	assert.NotNil(suite.T(), runtime)
 	assert.NotNil(suite.T(), runtime.GateClientMagicLinkURL)
 
-	assert.Equal(suite.T(), "/magiclink", runtime.GateClientMagicLinkURL.Path)
-	assert.Equal(suite.T(), "https://localhost:8443/magiclink", runtime.GateClientMagicLinkURL.String())
+	assert.Equal(suite.T(), "/callback", runtime.GateClientMagicLinkURL.Path)
+	assert.Equal(suite.T(), "https://localhost:8443/callback", runtime.GateClientMagicLinkURL.String())
 }
