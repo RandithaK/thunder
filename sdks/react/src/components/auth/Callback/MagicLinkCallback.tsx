@@ -38,7 +38,7 @@ export const MagicLinkCallback: FC<MagicLinkCallbackProps> = ({
   signInPath = '/signin',
 }: MagicLinkCallbackProps) => {
   const processingRef: any = useRef(false);
-  const {isInitialized, isLoading, signIn} = useThunderID();
+  const {isInitialized, isLoading, signIn, getStorageManager} = useThunderID();
 
   const navigate = (path: string): void => {
     if (onNavigate) {
@@ -145,7 +145,9 @@ export const MagicLinkCallback: FC<MagicLinkCallbackProps> = ({
           const redirectUrl: string | undefined = (response as any)?.redirectUrl || (response as any)?.redirect_uri;
 
           sessionStorage.removeItem('thunderid_execution_id');
-          localStorage.removeItem('thunderid_auth_id');
+          getStorageManager().then((storageManager: any) => {
+            storageManager.removeHybridDataParameter('authId');
+          });
 
           onSuccess?.({
             redirectUrl,

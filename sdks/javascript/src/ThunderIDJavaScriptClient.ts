@@ -440,7 +440,7 @@ class ThunderIDJavaScriptClient<T = Config> implements ThunderIDClient<T> {
       if (configData.enablePKCE) {
         codeVerifier = this.cryptoHelper?.getCodeVerifier();
         codeChallenge = await this.cryptoHelper?.getCodeChallenge(codeVerifier);
-        await this.storageManager.setTemporaryDataParameter(pkceKey, codeVerifier, userId);
+        await this.storageManager.setHybridDataParameter(pkceKey, codeVerifier, userId);
       }
 
       if (authRequestConfig['client_secret']) {
@@ -541,9 +541,9 @@ class ThunderIDJavaScriptClient<T = Config> implements ThunderIDClient<T> {
     if (configData.enablePKCE) {
       body.set(
         'code_verifier',
-        `${await this.storageManager.getTemporaryDataParameter(extractPkceStorageKeyFromState(state), userId)}`,
+        `${await this.storageManager.getHybridDataParameter(extractPkceStorageKeyFromState(state), userId)}`,
       );
-      await this.storageManager.removeTemporaryDataParameter(extractPkceStorageKeyFromState(state), userId);
+      await this.storageManager.removeHybridDataParameter(extractPkceStorageKeyFromState(state), userId);
     }
 
     const tokenRequestHeaders: Record<string, string> = {
@@ -787,14 +787,14 @@ class ThunderIDJavaScriptClient<T = Config> implements ThunderIDClient<T> {
   }
 
   protected async getPKCECode(state: string, userId?: string): Promise<string> {
-    return (await this.storageManager.getTemporaryDataParameter(
+    return (await this.storageManager.getHybridDataParameter(
       extractPkceStorageKeyFromState(state),
       userId,
     )) as string;
   }
 
   protected async setPKCECode(pkce: string, state: string, userId?: string): Promise<void> {
-    return this.storageManager.setTemporaryDataParameter(extractPkceStorageKeyFromState(state), pkce, userId);
+    return this.storageManager.setHybridDataParameter(extractPkceStorageKeyFromState(state), pkce, userId);
   }
 
   public getInstanceId(): number {

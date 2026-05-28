@@ -19,9 +19,9 @@
 import {AuthClientConfig} from './models/config';
 import {OIDCDiscoveryApiResponse} from './models/oidc-discovery';
 import {SessionData} from './models/session';
-import {Stores, Storage, TemporaryStore, TemporaryStoreValue} from './models/store';
+import {Stores, Storage, TemporaryStore, HybridStore, TemporaryStoreValue} from './models/store';
 
-type PartialData<T> = Partial<AuthClientConfig<T> | OIDCDiscoveryApiResponse | SessionData | TemporaryStore>;
+type PartialData<T> = Partial<AuthClientConfig<T> | OIDCDiscoveryApiResponse | SessionData | TemporaryStore | HybridStore>;
 
 export const THUNDERID_SESSION_ACTIVE = 'thunderid-session-active';
 
@@ -47,7 +47,7 @@ class StorageManager<T> {
 
   protected async setValue(
     key: string,
-    attribute: keyof AuthClientConfig<T> | keyof OIDCDiscoveryApiResponse | keyof SessionData | keyof TemporaryStore,
+    attribute: keyof AuthClientConfig<T> | keyof OIDCDiscoveryApiResponse | keyof SessionData | keyof TemporaryStore | keyof HybridStore,
     value: TemporaryStoreValue,
   ): Promise<void> {
     const existingDataJSON: string = (await this.store.getData(key)) ?? null;
@@ -61,7 +61,7 @@ class StorageManager<T> {
 
   protected async removeValue(
     key: string,
-    attribute: keyof AuthClientConfig<T> | keyof OIDCDiscoveryApiResponse | keyof SessionData | keyof TemporaryStore,
+    attribute: keyof AuthClientConfig<T> | keyof OIDCDiscoveryApiResponse | keyof SessionData | keyof TemporaryStore | keyof HybridStore,
   ): Promise<void> {
     const existingDataJSON: string = (await this.store.getData(key)) ?? null;
     const existingData: PartialData<T> = existingDataJSON && JSON.parse(existingDataJSON);
@@ -110,22 +110,19 @@ class StorageManager<T> {
   }
 
   public async setTemporaryData(temporaryData: Partial<TemporaryStore>, userId?: string): Promise<void> {
-    const resolvedKey = this.resolveKey(Stores.TemporaryData, userId);
-    const storeData: Partial<TemporaryStore> = {};
+    await this.setDataInBulk(this.resolveKey(Stores.TemporaryData, userId), temporaryData);
+  }
 
-    for (const [key, value] of Object.entries(temporaryData)) {
-      if (
-        key.startsWith('pkce_code_verifier') &&
-        StorageManager.isLocalStorageAvailable()
-      ) {
-        localStorage.setItem(`thunderid_pkce_${resolvedKey}_${key}`, value as string);
-      } else {
-        storeData[key] = value;
-      }
-    }
-
-    if (Object.keys(storeData).length > 0) {
-      await this.setDataInBulk(resolvedKey, storeData);
+  public async setHybridData(hybridData: Partial<HybridStore>, userId?: string): Promise<void> {
+    const resolvedKey = this.resolveKey(Stores.HybridData, userId);
+    
+    if (StorageManager.isLocalStorageAvailable()) {
+      const existingDataJSON = localStorage.getItem(resolvedKey);
+      const existingData: Partial<HybridStore> = existingDataJSON ? JSON.parse(existingDataJSON) : {};
+      const dataToBeSaved = { ...existingData, ...hybridData };
+      localStorage.setItem(resolvedKey, JSON.stringify(dataToBeSaved));
+    } else {
+      await this.setDataInBulk(resolvedKey, hybridData);
     }
   }
 
@@ -146,24 +143,20 @@ class StorageManager<T> {
   }
 
   public async getTemporaryData(userId?: string): Promise<TemporaryStore> {
-    const resolvedKey = this.resolveKey(Stores.TemporaryData, userId);
-    const storeDataJSON: string = (await this.store.getData(resolvedKey)) ?? null;
-    const storeData: TemporaryStore = storeDataJSON ? JSON.parse(storeDataJSON) : {};
+    const data: string = await this.store.getData(this.resolveKey(Stores.TemporaryData, userId));
+    return data ? JSON.parse(data) : {};
+  }
 
+  public async getHybridData(userId?: string): Promise<HybridStore> {
+    const resolvedKey = this.resolveKey(Stores.HybridData, userId);
+    
     if (StorageManager.isLocalStorageAvailable()) {
-      const prefix = `thunderid_pkce_${resolvedKey}_`;
-      Object.keys(localStorage)
-        .filter((storageKey) => storageKey.startsWith(prefix))
-        .forEach((storageKey) => {
-          const pkceKey = storageKey.slice(prefix.length);
-          const value = localStorage.getItem(storageKey);
-          if (value !== null) {
-            storeData[pkceKey] = value;
-          }
-        });
+      const storeDataJSON = localStorage.getItem(resolvedKey);
+      return storeDataJSON ? JSON.parse(storeDataJSON) : {};
     }
-
-    return storeData;
+    
+    const storeDataJSON: string = (await this.store.getData(resolvedKey)) ?? null;
+    return storeDataJSON ? JSON.parse(storeDataJSON) : {};
   }
 
 
@@ -209,14 +202,16 @@ class StorageManager<T> {
   }
 
   public async removeTemporaryData(userId?: string): Promise<void> {
-    const resolvedKey = this.resolveKey(Stores.TemporaryData, userId);
-    await this.store.removeData(resolvedKey);
+    await this.store.removeData(this.resolveKey(Stores.TemporaryData, userId));
+  }
 
+  public async removeHybridData(userId?: string): Promise<void> {
+    const resolvedKey = this.resolveKey(Stores.HybridData, userId);
+    
     if (StorageManager.isLocalStorageAvailable()) {
-      const prefix = `thunderid_pkce_${resolvedKey}_`;
-      Object.keys(localStorage)
-        .filter((storageKey) => storageKey.startsWith(prefix))
-        .forEach((storageKey) => localStorage.removeItem(storageKey));
+      localStorage.removeItem(resolvedKey);
+    } else {
+      await this.store.removeData(resolvedKey);
     }
   }
 
@@ -238,19 +233,20 @@ class StorageManager<T> {
   }
 
   public async getTemporaryDataParameter(key: keyof TemporaryStore, userId?: string): Promise<TemporaryStoreValue> {
-    if (
-      typeof key === 'string' &&
-      key.startsWith('pkce_code_verifier') &&
-      StorageManager.isLocalStorageAvailable()
-    ) {
-      const resolvedKey = this.resolveKey(Stores.TemporaryData, userId);
-      const value = localStorage.getItem(`thunderid_pkce_${resolvedKey}_${key}`);
-      if (value !== null) {
-        return value;
-      }
-    }
     const data: string = await this.store.getData(this.resolveKey(Stores.TemporaryData, userId));
+    return data && JSON.parse(data)[key];
+  }
 
+  public async getHybridDataParameter(key: keyof HybridStore, userId?: string): Promise<TemporaryStoreValue> {
+    const resolvedKey = this.resolveKey(Stores.HybridData, userId);
+    
+    if (StorageManager.isLocalStorageAvailable()) {
+      const existingDataJSON = localStorage.getItem(resolvedKey);
+      const existingData = existingDataJSON ? JSON.parse(existingDataJSON) : {};
+      return existingData[key];
+    }
+    
+    const data: string = await this.store.getData(resolvedKey);
     return data && JSON.parse(data)[key];
   }
 
@@ -277,16 +273,24 @@ class StorageManager<T> {
     value: TemporaryStoreValue,
     userId?: string,
   ): Promise<void> {
-    if (
-      typeof key === 'string' &&
-      key.startsWith('pkce_code_verifier') &&
-      StorageManager.isLocalStorageAvailable()
-    ) {
-      const resolvedKey = this.resolveKey(Stores.TemporaryData, userId);
-      localStorage.setItem(`thunderid_pkce_${resolvedKey}_${key}`, value as string);
-      return;
-    }
     await this.setValue(this.resolveKey(Stores.TemporaryData, userId), key, value);
+  }
+
+  public async setHybridDataParameter(
+    key: keyof HybridStore,
+    value: TemporaryStoreValue,
+    userId?: string,
+  ): Promise<void> {
+    const resolvedKey = this.resolveKey(Stores.HybridData, userId);
+    
+    if (StorageManager.isLocalStorageAvailable()) {
+      const existingDataJSON = localStorage.getItem(resolvedKey);
+      const existingData = existingDataJSON ? JSON.parse(existingDataJSON) : {};
+      const dataToBeSaved = { ...existingData, [key]: value };
+      localStorage.setItem(resolvedKey, JSON.stringify(dataToBeSaved));
+    } else {
+      await this.setValue(resolvedKey, key, value);
+    }
   }
 
 
@@ -307,16 +311,20 @@ class StorageManager<T> {
   }
 
   public async removeTemporaryDataParameter(key: keyof TemporaryStore, userId?: string): Promise<void> {
-    if (
-      typeof key === 'string' &&
-      key.startsWith('pkce_code_verifier') &&
-      StorageManager.isLocalStorageAvailable()
-    ) {
-      const resolvedKey = this.resolveKey(Stores.TemporaryData, userId);
-      localStorage.removeItem(`thunderid_pkce_${resolvedKey}_${key}`);
-      return;
-    }
     await this.removeValue(this.resolveKey(Stores.TemporaryData, userId), key);
+  }
+
+  public async removeHybridDataParameter(key: keyof HybridStore, userId?: string): Promise<void> {
+    const resolvedKey = this.resolveKey(Stores.HybridData, userId);
+    
+    if (StorageManager.isLocalStorageAvailable()) {
+      const existingDataJSON = localStorage.getItem(resolvedKey);
+      const existingData = existingDataJSON ? JSON.parse(existingDataJSON) : {};
+      delete existingData[key];
+      localStorage.setItem(resolvedKey, JSON.stringify(existingData));
+    } else {
+      await this.removeValue(resolvedKey, key);
+    }
   }
 
 
