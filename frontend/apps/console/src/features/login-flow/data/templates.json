@@ -1497,6 +1497,10 @@
               "type": "ID"
             },
             {
+              "key": "EMAIL_SENT_VIEW_ID",
+              "type": "ID"
+            },
+            {
               "key": "VERIFY_LINK_ID",
               "type": "ID"
             },
@@ -1612,11 +1616,71 @@
                   "name": "EmailExecutor",
                   "mode": "send"
                 },
-                "onSuccess": "{{VERIFY_LINK_ID}}"
+                "onSuccess": "{{EMAIL_SENT_VIEW_ID}}"
               },
               "properties": {
                 "emailTemplate": "MAGIC_LINK"
               }
+            }
+          },
+          {
+            "id": "{{EMAIL_SENT_VIEW_ID}}",
+            "type": "VIEW",
+            "size": {
+              "width": 350,
+              "height": 400
+            },
+            "position": {
+              "x": 950,
+              "y": 450
+            },
+            "data": {
+              "prompts": [
+                {
+                  "inputs": [
+                    {
+                      "ref": "magic_link_token_input",
+                      "identifier": "magicLinkToken",
+                      "type": "HIDDEN",
+                      "required": true
+                    }
+                  ],
+                  "action": {
+                    "ref": "magic_link_action",
+                    "nextNode": "{{VERIFY_LINK_ID}}"
+                  }
+                }
+              ],
+              "components": [
+                {
+                  "alt": "{{ t(signin:images.app_logo.alt) }}",
+                  "category": "DISPLAY",
+                  "height": "60",
+                  "id": "{{ID}}",
+                  "resourceType": "ELEMENT",
+                  "src": "{{ meta(application.logoUrl) }}",
+                  "type": "IMAGE",
+                  "width": ""
+                },
+                {
+                  "align": "center",
+                  "category": "DISPLAY",
+                  "id": "{{ID}}",
+                  "label": "{{ t(signin:forms.magicLink.emailSent.title) }}",
+                  "resourceType": "ELEMENT",
+                  "type": "TEXT",
+                  "variant": "HEADING_1"
+                },
+                {
+                  "align": "center",
+                  "category": "DISPLAY",
+                  "id": "{{ID}}",
+                  "label": "{{ t(signin:forms.magicLink.emailSent.description) }}",
+                  "resourceType": "ELEMENT",
+                  "type": "TEXT",
+                  "variant": "BODY_1"
+                }
+              ]
             }
           },
           {
@@ -1672,6 +1736,15 @@
             "position": {
               "x": 1600,
               "y": 300
+            },
+            "config": {},
+            "data": {
+              "action": {
+                "type": "EXECUTOR",
+                "executor": {
+                  "name": "LoginCompletionExecutor"
+                }
+              }
             }
           }
         ]

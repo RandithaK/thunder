@@ -1233,7 +1233,7 @@
                   "alt": "{{ t(signin:images.app_logo.alt) }}",
                   "category": "DISPLAY",
                   "height": "60",
-                  "id": "image_logo_sent",
+                  "id": "{{ID}}",
                   "resourceType": "ELEMENT",
                   "src": "{{ meta(application.logoUrl) }}",
                   "type": "IMAGE",
@@ -1242,7 +1242,7 @@
                 {
                   "align": "center",
                   "category": "DISPLAY",
-                  "id": "display_email_sent_heading",
+                  "id": "{{ID}}",
                   "label": "{{ t(signin:forms.magicLink.emailSent.title) }}",
                   "resourceType": "ELEMENT",
                   "type": "TEXT",
@@ -1251,7 +1251,7 @@
                 {
                   "align": "center",
                   "category": "DISPLAY",
-                  "id": "display_email_sent_desc",
+                  "id": "{{ID}}",
                   "label": "{{ t(signin:forms.magicLink.emailSent.description) }}",
                   "resourceType": "ELEMENT",
                   "type": "TEXT",
