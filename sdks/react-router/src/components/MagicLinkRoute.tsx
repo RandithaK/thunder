@@ -48,6 +48,12 @@ export interface MagicLinkRouteProps {
    * @default '/signin'
    */
   signInPath?: string;
+
+  /**
+   * The route where the SignUp component is mounted.
+   * @default '/signup'
+   */
+  signUpPath?: string;
 }
 
 /**
@@ -64,6 +70,7 @@ const MagicLinkRoute: FC<MagicLinkRouteProps> = ({
   onNavigate,
   onSuccess,
   signInPath,
+  signUpPath,
 }: MagicLinkRouteProps) => {
   const navigate: ReturnType<typeof useNavigate> = useNavigate();
   const location: ReturnType<typeof useLocation> = useLocation();
@@ -97,6 +104,7 @@ const MagicLinkRoute: FC<MagicLinkRouteProps> = ({
       }
       onSuccess={onSuccess}
       signInPath={signInPath}
+      signUpPath={signUpPath}
     />
   );
 };

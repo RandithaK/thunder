@@ -68,8 +68,8 @@ func createTestJWTWithClaims(executionID, jti string) string {
 func createRegistrationMagicLinkJWT(executionID, jti, subject string) string {
 	header := magicLinkTestJWTHeader
 	payload := fmt.Sprintf(
-		`{"sub":%q,"email":%q,"registration":true,"executionId":%q,"jti":%q,"exp":9999999999}`,
-		subject, subject, executionID, jti)
+		`{"sub":%q,"executionId":%q,"jti":%q,"exp":9999999999}`,
+		subject, executionID, jti)
 
 	headerB64 := base64.RawURLEncoding.EncodeToString([]byte(header))
 	payloadB64 := base64.RawURLEncoding.EncodeToString([]byte(payload))

@@ -336,7 +336,15 @@ class ThunderIDReactClient<T extends ThunderIDReactConfig = ThunderIDReactConfig
   override async signUp(options?: SignUpOptions): Promise<void>;
   override async signUp(payload: EmbeddedFlowExecuteRequestPayload): Promise<EmbeddedFlowExecuteResponse>;
   override async signUp(...args: any[]): Promise<void | EmbeddedFlowExecuteResponse> {
-    const config: ThunderIDReactConfig = (await this.getStorageManager().getConfigData()) as ThunderIDReactConfig;
+    let config: ThunderIDReactConfig | undefined = (await this.getStorageManager().getConfigData()) as
+      | ThunderIDReactConfig
+      | undefined;
+
+    if (!config || Object.keys(config).length === 0) {
+      await this.initialize(this._initializeConfig!);
+      config = (await this.getStorageManager().getConfigData()) as ThunderIDReactConfig | undefined;
+    }
+
     const firstArg: any = args[0];
     const baseUrl: string = config?.baseUrl ?? '';
 

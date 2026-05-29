@@ -48,6 +48,7 @@
     "@emotion/css": "catalog:",
     "@floating-ui/react": "catalog:",
     "@testing-library/react": "catalog:",
+    "@vitest/browser-playwright": "catalog:",
     "@thunderid/eslint-plugin": "workspace:^",
     "@thunderid/prettier-config": "workspace:^",
     "@types/node": "catalog:",

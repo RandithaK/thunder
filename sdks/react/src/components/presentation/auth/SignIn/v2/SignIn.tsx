@@ -320,7 +320,7 @@ const SignIn: FC<SignInProps> = ({
       code: urlParams.get('code'),
       error: urlParams.get('error'),
       errorDescription: urlParams.get('error_description'),
-      executionId: urlParams.get('executionId'),
+      executionId: urlParams.get('id') || urlParams.get('executionId'),
       nonce: urlParams.get('nonce'),
       state: urlParams.get('state'),
     };
@@ -442,6 +442,7 @@ const SignIn: FC<SignInProps> = ({
       if (urlParams.executionId) {
         response = (await signIn({
           executionId: urlParams.executionId,
+          ...(challengeTokenRef.current ? {challengeToken: challengeTokenRef.current} : {}),
         })) as EmbeddedSignInFlowResponseV2;
       } else {
         response = (await signIn({

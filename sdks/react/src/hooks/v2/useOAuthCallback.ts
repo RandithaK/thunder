@@ -133,7 +133,7 @@ export function useOAuthCallback({
     const code: string | null = urlParams.get('code');
     const nonce: string | null = urlParams.get('nonce');
     const state: string | null = urlParams.get('state');
-    const executionIdFromUrl: string | null = urlParams.get('executionId');
+    const executionIdFromUrl: string | null = urlParams.get('id') || urlParams.get('executionId');
     const error: string | null = urlParams.get('error');
     const errorDescription: string | null = urlParams.get('error_description');
 

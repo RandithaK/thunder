@@ -114,7 +114,7 @@ export default function SignUpBox(): JSX.Element {
       >
         {({values, fieldErrors, error, touched, handleInputChange, handleSubmit, isLoading, components}: any) => (
           <>
-            {!components ? (
+            {!components || (isLoading && !components.length) ? (
               <Box sx={{display: 'flex', justifyContent: 'center', p: 3}}>
                 <CircularProgress />
               </Box>

@@ -9301,10 +9301,73 @@
               "y": 353
             }
           },
+          "properties": {
+            "includeOptional": true,
+            "includeOptionalCredentials": true
+          },
           "executor": {
             "name": "ProvisioningExecutor"
           },
-          "onSuccess": "auth_assert"
+          "onSuccess": "auth_assert",
+          "onIncomplete": "prompt_user_details"
+        },
+        {
+          "id": "prompt_user_details",
+          "type": "PROMPT",
+          "layout": {
+            "size": {
+              "width": 350,
+              "height": 627
+            },
+            "position": {
+              "x": 2183,
+              "y": -193
+            }
+          },
+          "meta": {
+            "components": [
+              {
+                "align": "center",
+                "type": "TEXT",
+                "id": "text_header_user_details",
+                "label": "{{ t(signup:forms.basic_user_info.title) }}",
+                "variant": "HEADING_1"
+              },
+              {
+                "align": "center",
+                "type": "TEXT",
+                "id": "text_subtitle_user_details",
+                "label": "{{ t(signup:forms.basic_user_info.complete_profile) }}",
+                "variant": "HEADING_6"
+              },
+              {
+                "type": "BLOCK",
+                "id": "block_user_details",
+                "components": [
+                  {
+                    "type": "DYNAMIC_INPUT_PLACEHOLDER",
+                    "id": "dynamic_inputs_user_details"
+                  },
+                  {
+                    "type": "ACTION",
+                    "id": "action_user_details",
+                    "label": "{{ t(signup:forms.basic_user_info.actions.continue.label) }}",
+                    "variant": "PRIMARY",
+                    "eventType": "SUBMIT"
+                  }
+                ]
+              }
+            ]
+          },
+          "prompts": [
+            {
+              "inputs": [],
+              "action": {
+                "ref": "action_user_details",
+                "nextNode": "provisioning"
+              }
+            }
+          ]
         },
         {
           "id": "auth_assert",
@@ -9700,10 +9763,73 @@
               "y": 353
             }
           },
+          "properties": {
+            "includeOptional": true,
+            "includeOptionalCredentials": true
+          },
           "executor": {
             "name": "ProvisioningExecutor"
           },
-          "onSuccess": "auth_assert"
+          "onSuccess": "auth_assert",
+          "onIncomplete": "prompt_user_details"
+        },
+        {
+          "id": "prompt_user_details",
+          "type": "PROMPT",
+          "layout": {
+            "size": {
+              "width": 350,
+              "height": 627
+            },
+            "position": {
+              "x": 2183,
+              "y": -193
+            }
+          },
+          "meta": {
+            "components": [
+              {
+                "align": "center",
+                "type": "TEXT",
+                "id": "text_header_user_details",
+                "label": "{{ t(signup:forms.basic_user_info.title) }}",
+                "variant": "HEADING_1"
+              },
+              {
+                "align": "center",
+                "type": "TEXT",
+                "id": "text_subtitle_user_details",
+                "label": "{{ t(signup:forms.basic_user_info.complete_profile) }}",
+                "variant": "HEADING_6"
+              },
+              {
+                "type": "BLOCK",
+                "id": "block_user_details",
+                "components": [
+                  {
+                    "type": "DYNAMIC_INPUT_PLACEHOLDER",
+                    "id": "dynamic_inputs_user_details"
+                  },
+                  {
+                    "type": "ACTION",
+                    "id": "action_user_details",
+                    "label": "{{ t(signup:forms.basic_user_info.actions.continue.label) }}",
+                    "variant": "PRIMARY",
+                    "eventType": "SUBMIT"
+                  }
+                ]
+              }
+            ]
+          },
+          "prompts": [
+            {
+              "inputs": [],
+              "action": {
+                "ref": "action_user_details",
+                "nextNode": "provisioning"
+              }
+            }
+          ]
         },
         {
           "id": "auth_assert",

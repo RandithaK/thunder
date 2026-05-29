@@ -37,6 +37,18 @@ export interface CallbackRouteProps {
    * @param path - The path to navigate to
    */
   onNavigate?: (path: string) => void;
+
+  /**
+   * The route where the SignIn component is mounted.
+   * @default '/signin'
+   */
+  signInPath?: string;
+
+  /**
+   * The route where the SignUp component is mounted.
+   * @default '/signup'
+   */
+  signUpPath?: string;
 }
 
 /**
@@ -49,7 +61,12 @@ export interface CallbackRouteProps {
  * <Route path="/callback" element={<CallbackRoute />} />
  * ```
  */
-const CallbackRoute: FC<CallbackRouteProps> = ({onError, onNavigate}: CallbackRouteProps) => {
+const CallbackRoute: FC<CallbackRouteProps> = ({
+  onError,
+  onNavigate,
+  signInPath,
+  signUpPath,
+}: CallbackRouteProps) => {
   const navigate: ReturnType<typeof useNavigate> = useNavigate();
   const location: ReturnType<typeof useLocation> = useLocation();
 
@@ -80,6 +97,8 @@ const CallbackRoute: FC<CallbackRouteProps> = ({onError, onNavigate}: CallbackRo
           console.error('OAuth callback error:', error);
         })
       }
+      signInPath={signInPath}
+      signUpPath={signUpPath}
     />
   );
 };

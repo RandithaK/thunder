@@ -78,7 +78,7 @@ const Recovery: FC<RecoveryProps> = ({
         const effectiveApplicationId: string | null = applicationId ?? applicationIdFromUrl;
 
         if (tokenUrlParam) {
-          const executionId: string | null = urlParams.get('executionId');
+          const executionId: string | null = urlParams.get('id') || urlParams.get('executionId');
           const tokenValue: string | null = urlParams.get(tokenUrlParam);
 
           if (executionId && tokenValue) {

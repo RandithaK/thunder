@@ -20,15 +20,15 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {MagicLinkCallback} from '../MagicLinkCallback';
 
 const mockSignIn: any = vi.fn();
-const mockSetTemporaryDataParameter: any = vi.fn();
-const mockRemoveTemporaryDataParameter: any = vi.fn();
+const mockGetHybridDataParameter: any = vi.fn();
+const mockRemoveHybridDataParameter: any = vi.fn();
 
 const thunderIDContext: any = {
   afterSignInUrl: undefined,
   getStorageManager: vi.fn(() =>
     Promise.resolve({
-      removeTemporaryDataParameter: mockRemoveTemporaryDataParameter,
-      setTemporaryDataParameter: mockSetTemporaryDataParameter,
+      getHybridDataParameter: mockGetHybridDataParameter,
+      removeHybridDataParameter: mockRemoveHybridDataParameter,
     }),
   ),
   isInitialized: true,
@@ -36,7 +36,7 @@ const thunderIDContext: any = {
   signIn: mockSignIn,
 };
 
-vi.mock('../../../contexts/ThunderID/useThunderID', () => ({
+vi.mock('../../../../contexts/ThunderID/useThunderID', () => ({
   default: () => thunderIDContext,
 }));
 
@@ -45,6 +45,8 @@ describe('MagicLinkCallback', () => {
     vi.clearAllMocks();
     sessionStorage.clear();
     window.history.replaceState({}, '', '/');
+    mockGetHybridDataParameter.mockResolvedValue(undefined);
+    mockRemoveHybridDataParameter.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -59,7 +61,7 @@ describe('MagicLinkCallback', () => {
       flowStatus: 'INCOMPLETE',
       type: 'VIEW',
     });
-    window.history.replaceState({}, '', '/magiclink?executionId=exec-1&applicationId=app-1&token=secret-token');
+    window.history.replaceState({}, '', '/magiclink?id=exec-1&applicationId=app-1&token=secret-token');
 
     render(<MagicLinkCallback onNavigate={onNavigate} />);
 
@@ -74,13 +76,13 @@ describe('MagicLinkCallback', () => {
 
     expect(new URL(window.location.href).searchParams.get('token')).toBeNull();
     expect(sessionStorage.getItem('thunderid_execution_id')).toBe('next-exec');
-    expect(onNavigate).toHaveBeenCalledWith('/signin?executionId=next-exec&applicationId=app-1');
+    expect(onNavigate).toHaveBeenCalledWith('/signin?id=next-exec&applicationId=app-1');
   });
 
   it('redirects to sign-in with an error when required parameters are missing', async () => {
     const onError: any = vi.fn();
     const onNavigate: any = vi.fn();
-    window.history.replaceState({}, '', '/magiclink?executionId=exec-1');
+    window.history.replaceState({}, '', '/magiclink?id=exec-1');
 
     render(<MagicLinkCallback onError={onError} onNavigate={onNavigate} />);
 
@@ -98,7 +100,7 @@ describe('MagicLinkCallback', () => {
     const onError: any = vi.fn();
     const onNavigate: any = vi.fn();
     mockSignIn.mockRejectedValue(new Error('Invalid magic link'));
-    window.history.replaceState({}, '', '/magiclink?executionId=exec-1&token=secret-token');
+    window.history.replaceState({}, '', '/magiclink?id=exec-1&token=secret-token');
 
     render(<MagicLinkCallback onError={onError} onNavigate={onNavigate} />);
 
@@ -107,5 +109,32 @@ describe('MagicLinkCallback', () => {
     });
 
     expect(onNavigate).toHaveBeenCalledWith('/signin?error=magic_link_failed&error_description=Invalid+magic+link');
+  });
+
+  it('redirects to sign-up when hybrid storage indicates a registration flow', async () => {
+    const onNavigate: any = vi.fn();
+    mockSignIn.mockResolvedValue({
+      executionId: 'next-exec',
+      flowStatus: 'INCOMPLETE',
+      type: 'VIEW',
+    });
+    mockGetHybridDataParameter.mockResolvedValue(true);
+
+    window.history.replaceState({}, '', '/magiclink?id=exec-1&applicationId=app-1&token=secret-token');
+
+    render(<MagicLinkCallback onNavigate={onNavigate} />);
+
+    await waitFor(() => {
+      expect(mockSignIn).toHaveBeenCalledWith({
+        executionId: 'exec-1',
+        inputs: {
+          token: 'secret-token',
+        },
+      });
+    });
+
+    expect(new URL(window.location.href).searchParams.get('token')).toBeNull();
+    expect(sessionStorage.getItem('thunderid_execution_id')).toBe('next-exec');
+    expect(onNavigate).toHaveBeenCalledWith('/signup?id=next-exec&applicationId=app-1');
   });
 });

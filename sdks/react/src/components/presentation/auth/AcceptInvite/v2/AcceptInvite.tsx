@@ -108,7 +108,7 @@ const getUrlParams = (): {executionId?: string; inviteToken?: string} => {
 
   const params: any = new URLSearchParams(window.location.search);
   return {
-    executionId: params.get('executionId') || undefined,
+    executionId: params.get('id') || params.get('executionId') || undefined,
     inviteToken: params.get('inviteToken') || undefined,
   };
 };

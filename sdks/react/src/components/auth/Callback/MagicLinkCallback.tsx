@@ -29,6 +29,7 @@ export interface MagicLinkCallbackProps {
   onNavigate?: (path: string) => void;
   onSuccess?: (authData: Record<string, any>) => void;
   signInPath?: string;
+  signUpPath?: string;
 }
 
 export const MagicLinkCallback: FC<MagicLinkCallbackProps> = ({
@@ -36,6 +37,7 @@ export const MagicLinkCallback: FC<MagicLinkCallbackProps> = ({
   onError,
   onSuccess,
   signInPath = '/signin',
+  signUpPath = '/signup',
 }: MagicLinkCallbackProps) => {
   const processingRef: any = useRef(false);
   const {isInitialized, isLoading, signIn, getStorageManager} = useThunderID();
@@ -60,14 +62,14 @@ export const MagicLinkCallback: FC<MagicLinkCallbackProps> = ({
 
 
 
-  const initiateOAuthRedirect = (redirectURL: string): void => {
+  const initiateOAuthRedirect = (redirectURL: string, isRegistrationFlow?: boolean): void => {
     const redirectUrlObj: URL = new URL(redirectURL);
     const state: string = redirectUrlObj.searchParams.get('state') || crypto.randomUUID();
 
     sessionStorage.setItem(
       `thunderid_oauth_${state}`,
       JSON.stringify({
-        path: signInPath,
+        path: isRegistrationFlow ? signUpPath : signInPath,
         timestamp: Date.now(),
       }),
     );
@@ -75,19 +77,24 @@ export const MagicLinkCallback: FC<MagicLinkCallbackProps> = ({
     browserNavigate(redirectUrlObj.toString());
   };
 
-  const buildSignInPath = (executionId?: string | null, applicationId?: string | null): string => {
+  const buildSignInPath = (
+    executionId?: string | null,
+    applicationId?: string | null,
+    isRegistrationFlow?: boolean,
+  ): string => {
     const params: URLSearchParams = new URLSearchParams();
     if (executionId) {
-      params.set('executionId', executionId);
+      params.set('id', executionId);
     }
     if (applicationId) {
       params.set('applicationId', applicationId);
     }
 
-    return params.toString() ? `${signInPath}?${params.toString()}` : signInPath;
+    const basePath = isRegistrationFlow ? signUpPath : signInPath;
+    return params.toString() ? `${basePath}?${params.toString()}` : basePath;
   };
 
-  const redirectWithError = (error: Error): void => {
+  const redirectWithError = (error: Error, isRegistrationFlow?: boolean): void => {
     sessionStorage.removeItem('thunderid_execution_id');
 
     onError?.(error);
@@ -95,7 +102,8 @@ export const MagicLinkCallback: FC<MagicLinkCallbackProps> = ({
     const params: URLSearchParams = new URLSearchParams();
     params.set('error', 'magic_link_failed');
     params.set('error_description', error.message);
-    navigate(`${signInPath}?${params.toString()}`);
+    const basePath = isRegistrationFlow ? signUpPath : signInPath;
+    navigate(`${basePath}?${params.toString()}`);
   };
 
   useEffect(() => {
@@ -106,9 +114,13 @@ export const MagicLinkCallback: FC<MagicLinkCallbackProps> = ({
     const processMagicLink = async (): Promise<void> => {
       processingRef.current = true;
 
+      const storageManager: any = await getStorageManager();
+      const isRegistrationFlag = await storageManager.getHybridDataParameter('isRegistration');
+      const isRegistrationFlow: boolean = isRegistrationFlag === true;
+
       try {
         const urlParams: URLSearchParams = new URLSearchParams(window.location.search);
-        const executionId: string | null = urlParams.get('id');
+        const executionId: string | null = urlParams.get('id') || urlParams.get('executionId');
         const token: string | null = urlParams.get('token');
         const applicationId: string | null = urlParams.get('applicationId');
 
@@ -118,7 +130,8 @@ export const MagicLinkCallback: FC<MagicLinkCallbackProps> = ({
           const error = new Error('Missing executionId or token in Magic Link URL');
           // eslint-disable-next-line no-console
           console.error('Magic Link callback error:', error);
-          redirectWithError(error);
+          storageManager.removeHybridDataParameter('isRegistration');
+          redirectWithError(error, isRegistrationFlow);
           return;
         }
 
@@ -129,6 +142,10 @@ export const MagicLinkCallback: FC<MagicLinkCallbackProps> = ({
           },
         })) as EmbeddedSignInFlowResponseV2;
 
+        if (response.challengeToken) {
+          await storageManager.setTemporaryDataParameter('challengeToken', response.challengeToken);
+        }
+
         if (response.type === EmbeddedSignInFlowTypeV2.Redirection) {
           const redirectURL: string | undefined = (response.data as any)?.redirectURL || (response as any)?.redirectURL;
           const nextExecutionId: string = response.executionId || executionId;
@@ -136,7 +153,7 @@ export const MagicLinkCallback: FC<MagicLinkCallbackProps> = ({
           sessionStorage.setItem('thunderid_execution_id', nextExecutionId);
 
           if (redirectURL) {
-            initiateOAuthRedirect(redirectURL);
+            initiateOAuthRedirect(redirectURL, isRegistrationFlow);
             return;
           }
         }
@@ -145,9 +162,8 @@ export const MagicLinkCallback: FC<MagicLinkCallbackProps> = ({
           const redirectUrl: string | undefined = (response as any)?.redirectUrl || (response as any)?.redirect_uri;
 
           sessionStorage.removeItem('thunderid_execution_id');
-          getStorageManager().then((storageManager: any) => {
-            storageManager.removeHybridDataParameter('authId');
-          });
+          storageManager.removeHybridDataParameter('authId');
+          storageManager.removeHybridDataParameter('isRegistration');
 
           onSuccess?.({
             redirectUrl,
@@ -159,7 +175,7 @@ export const MagicLinkCallback: FC<MagicLinkCallbackProps> = ({
             return;
           }
 
-          navigate(signInPath);
+          navigate(isRegistrationFlow ? signUpPath : signInPath);
           return;
         }
 
@@ -168,23 +184,25 @@ export const MagicLinkCallback: FC<MagicLinkCallbackProps> = ({
           const error = new Error(failureReason || 'Magic Link authentication failed. Please try again.');
           // eslint-disable-next-line no-console
           console.error('Magic Link callback error:', error);
-          redirectWithError(error);
+          storageManager.removeHybridDataParameter('isRegistration');
+          redirectWithError(error, isRegistrationFlow);
           return;
         }
 
         const nextExecutionId: string = response.executionId || executionId;
         sessionStorage.setItem('thunderid_execution_id', nextExecutionId);
-        navigate(buildSignInPath(nextExecutionId, applicationId));
+        navigate(buildSignInPath(nextExecutionId, applicationId, isRegistrationFlow));
       } catch (err) {
         const error: Error = err instanceof Error ? err : new Error('Magic Link callback processing failed');
         // eslint-disable-next-line no-console
         console.error('Magic Link callback error:', err);
-        redirectWithError(error);
+        storageManager.removeHybridDataParameter('isRegistration');
+        redirectWithError(error, isRegistrationFlow);
       }
     };
 
     processMagicLink();
-  }, [isInitialized, isLoading, onError, onNavigate, onSuccess, signIn, signInPath]);
+  }, [isInitialized, isLoading, onError, onNavigate, onSuccess, signIn, signInPath, signUpPath]);
 
   return null;
 };
