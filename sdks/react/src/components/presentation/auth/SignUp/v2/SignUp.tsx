@@ -65,16 +65,28 @@ const SignUp: FC<SignUpProps> = ({
     payload?: EmbeddedFlowExecuteRequestPayload,
   ): Promise<EmbeddedFlowExecuteResponse> => {
     const urlParams: URLSearchParams = new URL(window.location.href).searchParams;
+    const executionIdFromUrl: string = urlParams.get('executionId') || '';
     const applicationIdFromUrl: string = urlParams.get('applicationId') ?? '';
 
     // Priority order: applicationId from context > applicationId from URL
     const effectiveApplicationId: any = applicationId || applicationIdFromUrl;
 
-    const initialPayload: any = payload || {
-      flowType: EmbeddedFlowType.Registration,
-      ...(effectiveApplicationId && {applicationId: effectiveApplicationId}),
-      ...(scopes && {scopes}),
-    };
+    const challengeToken: string | undefined = (payload as any)?.challengeToken;
+
+    let initialPayload: any;
+    if (executionIdFromUrl) {
+      initialPayload = {
+        executionId: executionIdFromUrl,
+        ...(challengeToken ? {challengeToken} : {}),
+      };
+    } else if (!payload || !('flowType' in payload)) {
+      initialPayload = {
+        flowType: EmbeddedFlowType.Registration,
+        ...(effectiveApplicationId && {applicationId: effectiveApplicationId}),
+      ...(scopes && {scopes}),};
+    } else {
+      initialPayload = payload;
+    }
 
     return (await signUp(initialPayload)) as EmbeddedFlowExecuteResponse;
   };

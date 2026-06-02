@@ -136,6 +136,8 @@ export * from './components/presentation/auth/OrganizationUnitPicker';
 export {BaseAcceptInvite, AcceptInvite} from './components/presentation/auth/AcceptInvite';
 
 export * from './components/auth/Callback/Callback';
+export * from './components/auth/Callback/TokenCallback';
+export * from './components/auth/Callback/OAuthCallback';
 
 // Sign-In Options
 export {default as IdentifierFirst} from './components/presentation/auth/SignIn/v1/options/IdentifierFirst';

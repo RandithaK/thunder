@@ -52,6 +52,10 @@ export interface Routes {
      * Recovery page route.
      */
     RECOVERY: string;
+    /**
+     * Magic link page route.
+     */
+    MAGIC_LINK: string;
   };
 }
 
@@ -78,6 +82,7 @@ const ROUTES: Routes = {
     INVITE: '/invite',
     CALLBACK: '/callback',
     RECOVERY: '/recovery',
+    MAGIC_LINK: '/magiclink',
   },
 } as const;
 

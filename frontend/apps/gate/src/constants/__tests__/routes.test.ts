@@ -52,6 +52,10 @@ describe('ROUTES', () => {
     expect(ROUTES.AUTH.CALLBACK).toBe('/callback');
   });
 
+  it('has AUTH.MAGIC_LINK path', () => {
+    expect(ROUTES.AUTH.MAGIC_LINK).toBe('/magiclink');
+  });
+
   it('Routes interface has correct structure', () => {
     const routes: Routes = {
       ROOT: '/',
@@ -62,6 +66,7 @@ describe('ROUTES', () => {
         INVITE: '/invite',
         CALLBACK: '/callback',
         RECOVERY: '/recovery',
+        MAGIC_LINK: '/magiclink',
       },
     };
     expect(routes.ROOT).toBe('/');
@@ -70,5 +75,6 @@ describe('ROUTES', () => {
     expect(routes.AUTH.SIGN_UP).toBe('/signup');
     expect(routes.AUTH.INVITE).toBe('/invite');
     expect(routes.AUTH.CALLBACK).toBe('/callback');
+    expect(routes.AUTH.MAGIC_LINK).toBe('/magiclink');
   });
 });
