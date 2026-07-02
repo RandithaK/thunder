@@ -36,6 +36,7 @@ export const ALLOWED_RESOURCE_TYPES = [
   'presentation_definition',
   'credential_configuration',
   'server_config',
+  'notification_sender',
 ] as const;
 
 export type ResourceType = (typeof ALLOWED_RESOURCE_TYPES)[number];

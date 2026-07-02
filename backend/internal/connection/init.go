@@ -89,15 +89,15 @@ func registerRoutes(mux *http.ServeMux, h *handler) {
 		collectionOpts, itemOpts)
 
 	// SMS-backed vendors.
-	registerSMSVendorRoutes(mux, h, "/connections/twilio", ncommon.MessageProviderTypeTwilio,
+	registerSMSVendorRoutes(mux, h, "/connections/twilio", ncommon.NotificationProviderTypeTwilio,
 		createSMSHandler(h, twilioToSenderDTO, twilioFromSenderDTO),
-		getSMSHandler(h, ncommon.MessageProviderTypeTwilio, twilioFromSenderDTO),
-		updateSMSHandler(h, ncommon.MessageProviderTypeTwilio, twilioToSenderDTO, twilioFromSenderDTO),
+		getSMSHandler(h, ncommon.NotificationProviderTypeTwilio, twilioFromSenderDTO),
+		updateSMSHandler(h, ncommon.NotificationProviderTypeTwilio, twilioToSenderDTO, twilioFromSenderDTO),
 		collectionOpts, itemOpts)
-	registerSMSVendorRoutes(mux, h, "/connections/vonage", ncommon.MessageProviderTypeVonage,
+	registerSMSVendorRoutes(mux, h, "/connections/vonage", ncommon.NotificationProviderTypeVonage,
 		createSMSHandler(h, vonageToSenderDTO, vonageFromSenderDTO),
-		getSMSHandler(h, ncommon.MessageProviderTypeVonage, vonageFromSenderDTO),
-		updateSMSHandler(h, ncommon.MessageProviderTypeVonage, vonageToSenderDTO, vonageFromSenderDTO),
+		getSMSHandler(h, ncommon.NotificationProviderTypeVonage, vonageFromSenderDTO),
+		updateSMSHandler(h, ncommon.NotificationProviderTypeVonage, vonageToSenderDTO, vonageFromSenderDTO),
 		collectionOpts, itemOpts)
 }
 
@@ -130,7 +130,7 @@ func registerVendorRoutes(mux *http.ServeMux, h *handler, base string, idpType p
 // routes for a single SMS-backed vendor, plus their OPTIONS handlers.
 //
 //nolint:dupl // mirrors registerVendorRoutes but scopes deletion by message provider, not IdP type
-func registerSMSVendorRoutes(mux *http.ServeMux, h *handler, base string, provider ncommon.MessageProviderType,
+func registerSMSVendorRoutes(mux *http.ServeMux, h *handler, base string, provider ncommon.NotificationProviderType,
 	create, get, update http.HandlerFunc, collectionOpts, itemOpts middleware.CORSOptions) {
 	mux.HandleFunc(middleware.WithCORS("GET "+base, h.listSMSInstances(provider), collectionOpts))
 	mux.HandleFunc(middleware.WithCORS("POST "+base, create, collectionOpts))

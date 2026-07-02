@@ -62,9 +62,10 @@ func (s *HandlerTestSuite) TestListConnections() {
 		{ID: "2", Type: providers.IDPTypeGoogle},
 		{ID: "3", Type: providers.IDPTypeOIDC},
 	}, (*tidcommon.ServiceError)(nil))
-	s.mockNotif.On("ListSenders", mock.Anything).Return([]ncommon.NotificationSenderDTO{
-		{ID: "s1", Type: ncommon.NotificationSenderTypeMessage, Provider: ncommon.MessageProviderTypeTwilio},
-	}, (*tidcommon.ServiceError)(nil))
+	s.mockNotif.On("ListSenders", mock.Anything, ncommon.NotificationSenderTypeMessage).Return(
+		[]ncommon.NotificationSenderDTO{
+			{ID: "s1", Type: ncommon.NotificationSenderTypeMessage, Provider: ncommon.NotificationProviderTypeTwilio},
+		}, (*tidcommon.ServiceError)(nil))
 
 	req := httptest.NewRequest(http.MethodGet, "/connections", nil)
 	rr := httptest.NewRecorder()
@@ -223,7 +224,7 @@ func (s *HandlerTestSuite) TestUsagesSuccess() {
 	s.Equal("restrict", resp.Usages[0].BehaviorOnDelete)
 }
 
-const stubProvider = ncommon.MessageProviderTypeTwilio
+const stubProvider = ncommon.NotificationProviderTypeTwilio
 
 type smsStubReq struct {
 	Name string `json:"name"`
@@ -392,7 +393,7 @@ func (s *SMSHandlerTestSuite) TestUpdateFromDTOError() {
 }
 
 func (s *SMSHandlerTestSuite) TestListInstancesServiceError() {
-	s.mockNotif.On("ListSenders", mock.Anything).
+	s.mockNotif.On("ListSenders", mock.Anything, ncommon.NotificationSenderTypeMessage).
 		Return(([]ncommon.NotificationSenderDTO)(nil), &tidcommon.InternalServerError)
 
 	req := httptest.NewRequest(http.MethodGet, "/connections/twilio", nil)
@@ -402,13 +403,14 @@ func (s *SMSHandlerTestSuite) TestListInstancesServiceError() {
 }
 
 func (s *SMSHandlerTestSuite) TestListInstancesSuccess() {
-	s.mockNotif.On("ListSenders", mock.Anything).Return([]ncommon.NotificationSenderDTO{
-		{
-			ID: "tw-1", Name: "A", Description: "d",
-			Type: ncommon.NotificationSenderTypeMessage, Provider: stubProvider,
-		},
-		{ID: "vo-1", Type: ncommon.NotificationSenderTypeMessage, Provider: ncommon.MessageProviderTypeVonage},
-	}, (*tidcommon.ServiceError)(nil))
+	s.mockNotif.On("ListSenders", mock.Anything, ncommon.NotificationSenderTypeMessage).Return(
+		[]ncommon.NotificationSenderDTO{
+			{
+				ID: "tw-1", Name: "A", Description: "d",
+				Type: ncommon.NotificationSenderTypeMessage, Provider: stubProvider,
+			},
+			{ID: "vo-1", Type: ncommon.NotificationSenderTypeMessage, Provider: ncommon.NotificationProviderTypeVonage},
+		}, (*tidcommon.ServiceError)(nil))
 
 	req := httptest.NewRequest(http.MethodGet, "/connections/twilio", nil)
 	rr := httptest.NewRecorder()

@@ -72,7 +72,7 @@ func (s *NotificationSenderExporterTestSuite) TestGetAllResourceIDs_Success() {
 		{ID: "sender2", Name: "Sender 2"},
 	}
 
-	s.mockService.EXPECT().ListSenders(mock.Anything).Return(expectedSenders, nil)
+	s.mockService.EXPECT().ListSenders(mock.Anything, common.NotificationSenderType("")).Return(expectedSenders, nil)
 
 	ids, err := s.exporter.GetAllResourceIDs(context.Background())
 
@@ -88,7 +88,7 @@ func (s *NotificationSenderExporterTestSuite) TestGetAllResourceIDs_Error() {
 		Error: tidcommon.I18nMessage{DefaultValue: "test error"},
 	}
 
-	s.mockService.EXPECT().ListSenders(mock.Anything).Return(nil, expectedError)
+	s.mockService.EXPECT().ListSenders(mock.Anything, common.NotificationSenderType("")).Return(nil, expectedError)
 
 	ids, err := s.exporter.GetAllResourceIDs(context.Background())
 
@@ -99,7 +99,7 @@ func (s *NotificationSenderExporterTestSuite) TestGetAllResourceIDs_Error() {
 func (s *NotificationSenderExporterTestSuite) TestGetAllResourceIDs_EmptyList() {
 	expectedSenders := []common.NotificationSenderDTO{}
 
-	s.mockService.EXPECT().ListSenders(mock.Anything).Return(expectedSenders, nil)
+	s.mockService.EXPECT().ListSenders(mock.Anything, common.NotificationSenderType("")).Return(expectedSenders, nil)
 
 	ids, err := s.exporter.GetAllResourceIDs(context.Background())
 

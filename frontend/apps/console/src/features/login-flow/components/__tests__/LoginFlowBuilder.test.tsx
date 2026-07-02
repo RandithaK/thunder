@@ -52,6 +52,9 @@ const {
   mockEdgeStyle,
   mockUseFlowConfig,
   getDefaultFlowConfigMock,
+  mockUseNotificationSenders,
+  mockOnElementAdded,
+  mockOnRestoreFromHistory,
 } = vi.hoisted(() => {
   const setFlowCompletionConfigsFn = vi.fn();
   const isVerboseModeObj = {value: true};
@@ -78,6 +81,9 @@ const {
     mockEdgeStyle: edgeStyleObj,
     // Note: This mock reads values dynamically at call time
     mockUseFlowConfig: vi.fn(),
+    mockUseNotificationSenders: vi.fn(() => ({data: [], isLoading: false})),
+    mockOnElementAdded: vi.fn(),
+    mockOnRestoreFromHistory: vi.fn(),
     // Helper to get the default implementation that reads current values
     getDefaultFlowConfigMock: () => ({
       setFlowCompletionConfigs: setFlowCompletionConfigsFn,
@@ -459,9 +465,9 @@ vi.mock('@/features/flows/hooks/useFlowEvents', () => ({
     triggerAutoLayout: vi.fn(),
     onAutoLayout: vi.fn(() => vi.fn()),
     notifyElementAdded: vi.fn(),
-    onElementAdded: vi.fn(() => vi.fn()),
+    onElementAdded: mockOnElementAdded,
     restoreFromHistory: vi.fn(),
-    onRestoreFromHistory: vi.fn(() => vi.fn()),
+    onRestoreFromHistory: mockOnRestoreFromHistory,
   }),
 }));
 
@@ -508,7 +514,7 @@ vi.mock('@thunderid/configure-connections', async (importOriginal) => ({
 }));
 
 vi.mock('@/features/notification-senders/api/useNotificationSenders', () => ({
-  default: () => ({data: [], isLoading: false}),
+  default: mockUseNotificationSenders,
 }));
 
 // Mock utility functions
@@ -6385,5 +6391,161 @@ describe('Verbose Mode Node and Edge Filtering', () => {
     render(<LoginFlowBuilder />);
 
     expect(screen.getByTestId('edges-count')).toHaveTextContent('1');
+  });
+
+  describe('Notification Senders Auto-assignment', () => {
+    beforeEach(() => {
+      mockUseNodesState.mockReturnValue([[], mockSetNodes, vi.fn()]);
+      (mockUseNotificationSenders as ReturnType<typeof vi.fn>).mockImplementation(() => ({data: [], isLoading: false}));
+    });
+
+    it('should auto-assign senderId for SMS executor if there is exactly 1 message sender', () => {
+      const smsExecutorNode: Node = {
+        id: 'sms-exec-1',
+        type: 'TASK_EXECUTION',
+        position: {x: 0, y: 0},
+        data: {
+          action: {
+            executor: {
+              name: 'SMSExecutor',
+            },
+          },
+          properties: {
+            senderId: '{{SENDER_ID}}',
+          },
+        },
+      };
+
+      mockUseNodesState.mockReturnValue([[smsExecutorNode], mockSetNodes, vi.fn()]);
+
+      (mockUseNotificationSenders as ReturnType<typeof vi.fn>).mockImplementation((type?: string) => {
+        if (type === 'message') {
+          return {data: [{id: 'message-sender-1'}], isLoading: false};
+        }
+        return {data: [], isLoading: false};
+      });
+
+      render(<LoginFlowBuilder />);
+
+      render(<LoginFlowBuilder />);
+
+      expect(mockSetNodes).toHaveBeenCalled();
+      let finalNodes: Node[] = [];
+      for (const call of mockSetNodes.mock.calls) {
+        if (typeof call[0] === 'function') {
+          const updater = call[0] as unknown as (nodes: Node[]) => Node[];
+          const res = updater([smsExecutorNode]);
+          if (res && res.length > 0 && res[0].id === 'sms-exec-1') {
+            finalNodes = res;
+          }
+        }
+      }
+
+      expect(finalNodes.length).toBeGreaterThan(0);
+      const firstNodeData = finalNodes[0].data as unknown as {properties: {senderId: string}};
+      expect(firstNodeData.properties.senderId).toBe('message-sender-1');
+    });
+
+    it('should auto-assign senderId for Email executor if there is exactly 1 email sender', () => {
+      const emailExecutorNode: Node = {
+        id: 'email-exec-1',
+        type: 'TASK_EXECUTION',
+        position: {x: 0, y: 0},
+        data: {
+          action: {
+            executor: {
+              name: 'EmailExecutor',
+            },
+          },
+          properties: {
+            senderId: '',
+          },
+        },
+      };
+
+      mockUseNodesState.mockReturnValue([[emailExecutorNode], mockSetNodes, vi.fn()]);
+
+      (mockUseNotificationSenders as ReturnType<typeof vi.fn>).mockImplementation((type?: string) => {
+        if (type === 'email') {
+          return {data: [{id: 'email-sender-1'}], isLoading: false};
+        }
+        return {data: [], isLoading: false};
+      });
+
+      render(<LoginFlowBuilder />);
+
+      render(<LoginFlowBuilder />);
+
+      expect(mockSetNodes).toHaveBeenCalled();
+      let finalNodes: Node[] = [];
+      for (const call of mockSetNodes.mock.calls) {
+        if (typeof call[0] === 'function') {
+          const updater = call[0] as unknown as (nodes: Node[]) => Node[];
+          const res = updater([emailExecutorNode]);
+          if (res && res.length > 0 && res[0].id === 'email-exec-1') {
+            finalNodes = res;
+          }
+        }
+      }
+
+      expect(finalNodes.length).toBeGreaterThan(0);
+      const firstNodeData = finalNodes[0].data as unknown as {properties: {senderId: string}};
+      expect(firstNodeData.properties.senderId).toBe('email-sender-1');
+    });
+  });
+
+  describe('Event Listeners', () => {
+    beforeEach(() => {
+      mockSetNodes.mockClear();
+      mockSetEdges.mockClear();
+    });
+
+    it('should update nodes and edges when onRestoreFromHistory is triggered', () => {
+      let restoreCallback: (nodes: Node[], edges: Edge[]) => void = () => undefined;
+      (mockOnRestoreFromHistory as ReturnType<typeof vi.fn>).mockImplementation(
+        (cb?: (nodes: Node[], edges: Edge[]) => void) => {
+          if (cb) restoreCallback = cb;
+          return vi.fn();
+        },
+      );
+
+      render(<LoginFlowBuilder />);
+
+      const restoredNodes: Node[] = [{id: 'restored-node', type: 'VIEW', position: {x: 0, y: 0}, data: {}}];
+      const restoredEdges: Edge[] = [{id: 'restored-edge', source: 'restored-node', target: 'other'}];
+
+      restoreCallback(restoredNodes, restoredEdges);
+
+      expect(mockSetNodes).toHaveBeenCalledWith(restoredNodes);
+      expect(mockSetEdges).toHaveBeenCalledWith(restoredEdges);
+    });
+
+    it('should show info snackbar when onElementAdded is triggered with step, widget, or template', async () => {
+      let elementAddedCallback: (type: string) => void = () => undefined;
+      (mockOnElementAdded as ReturnType<typeof vi.fn>).mockImplementation((cb?: (type: string) => void) => {
+        if (cb) elementAddedCallback = cb;
+        return vi.fn();
+      });
+
+      render(<LoginFlowBuilder />);
+
+      // Test 'step'
+      elementAddedCallback('step');
+      await waitFor(() => {
+        expect(screen.getByText('flows:core.canvas.hints.autoLayout')).toBeInTheDocument();
+      });
+
+      // Test 'widget'
+      elementAddedCallback('widget');
+      await waitFor(() => {
+        expect(screen.getByText('flows:core.canvas.hints.autoLayout')).toBeInTheDocument();
+      });
+
+      // Test 'template'
+      elementAddedCallback('template');
+      await waitFor(() => {
+        expect(screen.getByText('flows:core.canvas.hints.autoLayout')).toBeInTheDocument();
+      });
+    });
   });
 });

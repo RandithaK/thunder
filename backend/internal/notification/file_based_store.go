@@ -76,7 +76,10 @@ func (f *notificationFileBasedStore) getSenderByName(
 }
 
 // listSenders implements notificationStoreInterface.
-func (f *notificationFileBasedStore) listSenders(ctx context.Context) ([]common.NotificationSenderDTO, error) {
+func (f *notificationFileBasedStore) listSenders(
+	ctx context.Context,
+	senderType common.NotificationSenderType,
+) ([]common.NotificationSenderDTO, error) {
 	list, err := f.GenericFileBasedStore.List()
 	if err != nil {
 		return nil, err
@@ -85,7 +88,9 @@ func (f *notificationFileBasedStore) listSenders(ctx context.Context) ([]common.
 	senderList := make([]common.NotificationSenderDTO, 0)
 	for _, item := range list {
 		if sender, ok := item.Data.(*common.NotificationSenderDTO); ok {
-			senderList = append(senderList, *sender)
+			if senderType == "" || sender.Type == senderType {
+				senderList = append(senderList, *sender)
+			}
 		}
 	}
 	return senderList, nil

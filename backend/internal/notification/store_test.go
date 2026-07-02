@@ -101,7 +101,7 @@ func (suite *StoreTestSuite) TestCreateSender() {
 		Name:        "Test Sender",
 		Description: "Test Description",
 		Type:        common.NotificationSenderTypeMessage,
-		Provider:    common.MessageProviderTypeTwilio,
+		Provider:    common.NotificationProviderTypeTwilio,
 		Properties:  []cmodels.Property{*p},
 	}
 
@@ -199,7 +199,7 @@ func (suite *StoreTestSuite) TestListSenders_WithPropertiesStringAndBytes() {
 
 			[]map[string]interface{}{row1, row2}, nil).Once()
 
-	senders, err := suite.store.listSenders(context.Background())
+	senders, err := suite.store.listSenders(context.Background(), "")
 	suite.NoError(err)
 	suite.Len(senders, 2)
 	suite.Len(senders[0].Properties, 1)
@@ -208,7 +208,7 @@ func (suite *StoreTestSuite) TestListSenders_WithPropertiesStringAndBytes() {
 
 func (suite *StoreTestSuite) TestListSenders_GetConfigDBClientError() {
 	suite.mockDBProvider.EXPECT().GetConfigDBClient().Return(nil, errors.New("db err")).Once()
-	res, err := suite.store.listSenders(context.Background())
+	res, err := suite.store.listSenders(context.Background(), "")
 	suite.Error(err)
 	suite.Nil(res)
 	suite.Contains(err.Error(), "failed to get database client")
@@ -219,7 +219,7 @@ func (suite *StoreTestSuite) TestListSenders_WithError() {
 	suite.mockDBClient.EXPECT().QueryContext(context.Background(), queryGetAllNotificationSenders, testDeploymentID).
 		Return(nil, errors.New("query fail")).Once()
 
-	res, err := suite.store.listSenders(context.Background())
+	res, err := suite.store.listSenders(context.Background(), "")
 	suite.Error(err)
 	suite.Nil(res)
 	suite.Contains(err.Error(), "failed to execute query")
@@ -231,7 +231,7 @@ func (suite *StoreTestSuite) TestListSenders_WithError() {
 
 			[]map[string]interface{}{badRow}, nil).Once()
 
-	res2, err := suite.store.listSenders(context.Background())
+	res2, err := suite.store.listSenders(context.Background(), "")
 	suite.Error(err)
 	suite.Nil(res2)
 	suite.Contains(err.Error(), "failed to build sender from result row")
@@ -251,7 +251,7 @@ func (suite *StoreTestSuite) TestListSenders_WithError() {
 
 			[]map[string]interface{}{row}, nil).Once()
 
-	res3, err := suite.store.listSenders(context.Background())
+	res3, err := suite.store.listSenders(context.Background(), "")
 	suite.Error(err)
 	suite.Nil(res3)
 	suite.Contains(err.Error(), "failed to deserialize properties from JSON")
@@ -411,7 +411,7 @@ func (suite *StoreTestSuite) TestGetSender_WithProperties() {
 }
 
 func (suite *StoreTestSuite) TestUpdateSender() {
-	sender := common.NotificationSenderDTO{ID: "s1", Name: "n1", Provider: common.MessageProviderTypeTwilio}
+	sender := common.NotificationSenderDTO{ID: "s1", Name: "n1", Provider: common.NotificationProviderTypeTwilio}
 
 	suite.mockDBProvider.EXPECT().GetConfigDBClient().Return(suite.mockDBClient, nil).Once()
 	suite.mockDBClient.EXPECT().ExecuteContext(context.Background(), queryUpdateNotificationSender,
@@ -426,7 +426,7 @@ func (suite *StoreTestSuite) TestUpdateSender_WithProperties() {
 	p, err := cmodels.NewProperty("k", "v", false)
 	suite.NoError(err)
 	sender := common.NotificationSenderDTO{ID: "s1", Name: "n1",
-		Provider: common.MessageProviderTypeTwilio, Properties: []cmodels.Property{*p}}
+		Provider: common.NotificationProviderTypeTwilio, Properties: []cmodels.Property{*p}}
 
 	suite.mockDBProvider.EXPECT().GetConfigDBClient().Return(suite.mockDBClient, nil).Once()
 	propsJSON, err := cmodels.SerializePropertiesToJSONArray([]cmodels.Property{*p})
@@ -461,7 +461,7 @@ func (suite *StoreTestSuite) TestUpdateSender_WithError() {
 		{
 			name: "execute error",
 			setup: func(t *testing.T) {
-				sender := common.NotificationSenderDTO{Name: "n1", Provider: common.MessageProviderTypeTwilio}
+				sender := common.NotificationSenderDTO{Name: "n1", Provider: common.NotificationProviderTypeTwilio}
 				suite.mockDBProvider.EXPECT().GetConfigDBClient().Return(suite.mockDBClient, nil).Once()
 				suite.mockDBClient.EXPECT().ExecuteContext(context.Background(), queryUpdateNotificationSender,
 					sender.Name,
@@ -477,7 +477,7 @@ func (suite *StoreTestSuite) TestUpdateSender_WithError() {
 			tc.setup(t)
 			// use a sender without properties for these failure-case checks
 			sender := common.NotificationSenderDTO{ID: "s1", Name: "n1",
-				Provider: common.MessageProviderTypeTwilio}
+				Provider: common.NotificationProviderTypeTwilio}
 			err := suite.store.updateSender(context.Background(), "s1", sender)
 			suite.Error(err)
 			suite.Contains(err.Error(), tc.wantErr)
@@ -486,7 +486,7 @@ func (suite *StoreTestSuite) TestUpdateSender_WithError() {
 }
 
 func (suite *StoreTestSuite) TestUpdateSender_ExecuteError() {
-	sender := common.NotificationSenderDTO{ID: "s1", Name: "n1", Provider: common.MessageProviderTypeTwilio}
+	sender := common.NotificationSenderDTO{ID: "s1", Name: "n1", Provider: common.NotificationProviderTypeTwilio}
 	suite.mockDBProvider.EXPECT().GetConfigDBClient().Return(suite.mockDBClient, nil).Once()
 	suite.mockDBClient.EXPECT().ExecuteContext(context.Background(), queryUpdateNotificationSender,
 		sender.Name, sender.Description,
@@ -508,7 +508,7 @@ func (suite *StoreTestSuite) TestUpdateSender_SerializeError() {
 	p, err := cmodels.NewProperty("k", "v", false)
 	suite.NoError(err)
 	sender := common.NotificationSenderDTO{ID: "s1", Name: "n1",
-		Provider: common.MessageProviderTypeTwilio, Properties: []cmodels.Property{*p}}
+		Provider: common.NotificationProviderTypeTwilio, Properties: []cmodels.Property{*p}}
 
 	suite.mockDBProvider.EXPECT().GetConfigDBClient().Return(suite.mockDBClient, nil).Once()
 

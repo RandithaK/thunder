@@ -1317,7 +1317,7 @@ func (suite *ExportServiceTestSuite) TestExportNotificationSenders_Success() {
 		ID:          "sender1",
 		Name:        "Test Sender",
 		Description: "Test notification sender",
-		Provider:    common.MessageProviderTypeTwilio,
+		Provider:    common.NotificationProviderTypeTwilio,
 		Properties:  []cmodels.Property{*mockProperty},
 	}
 
@@ -1343,7 +1343,7 @@ func (suite *ExportServiceTestSuite) TestExportNotificationSenders_Multiple() {
 	mockSender1 := &common.NotificationSenderDTO{
 		ID:         "sender1",
 		Name:       "Twilio Sender",
-		Provider:   common.MessageProviderTypeTwilio,
+		Provider:   common.NotificationProviderTypeTwilio,
 		Properties: []cmodels.Property{*mockProperty1},
 	}
 
@@ -1351,7 +1351,7 @@ func (suite *ExportServiceTestSuite) TestExportNotificationSenders_Multiple() {
 	mockSender2 := &common.NotificationSenderDTO{
 		ID:         "sender2",
 		Name:       "Vonage Sender",
-		Provider:   common.MessageProviderTypeVonage,
+		Provider:   common.NotificationProviderTypeVonage,
 		Properties: []cmodels.Property{*mockProperty2},
 	}
 
@@ -1380,7 +1380,7 @@ func (suite *ExportServiceTestSuite) TestExportNotificationSenders_Wildcard() {
 	mockSender1 := &common.NotificationSenderDTO{
 		ID:         "sender1",
 		Name:       "Twilio Sender",
-		Provider:   common.MessageProviderTypeTwilio,
+		Provider:   common.NotificationProviderTypeTwilio,
 		Properties: []cmodels.Property{*mockProperty1},
 	}
 
@@ -1388,13 +1388,14 @@ func (suite *ExportServiceTestSuite) TestExportNotificationSenders_Wildcard() {
 	mockSender2 := &common.NotificationSenderDTO{
 		ID:         "sender2",
 		Name:       "Vonage Sender",
-		Provider:   common.MessageProviderTypeVonage,
+		Provider:   common.NotificationProviderTypeVonage,
 		Properties: []cmodels.Property{*mockProperty2},
 	}
 
 	mockSenderList := []common.NotificationSenderDTO{*mockSender1, *mockSender2}
 
-	suite.mockNotificationService.EXPECT().ListSenders(mock.Anything).Return(mockSenderList, nil)
+	suite.mockNotificationService.EXPECT().
+		ListSenders(mock.Anything, common.NotificationSenderType("")).Return(mockSenderList, nil)
 	suite.mockNotificationService.EXPECT().GetSender(mock.Anything, "sender1").Return(mockSender1, nil)
 	suite.mockNotificationService.EXPECT().GetSender(mock.Anything, "sender2").Return(mockSender2, nil)
 
@@ -1443,7 +1444,7 @@ func (suite *ExportServiceTestSuite) TestExportNotificationSenders_EmptyName() {
 	mockSender := &common.NotificationSenderDTO{
 		ID:         "sender-no-name",
 		Name:       "", // Empty name
-		Provider:   common.MessageProviderTypeTwilio,
+		Provider:   common.NotificationProviderTypeTwilio,
 		Properties: []cmodels.Property{*mockProperty},
 	}
 
@@ -1468,7 +1469,7 @@ func (suite *ExportServiceTestSuite) TestExportNotificationSenders_NoProperties(
 	mockSender := &common.NotificationSenderDTO{
 		ID:         "sender-no-props",
 		Name:       "Empty Sender",
-		Provider:   common.MessageProviderTypeTwilio,
+		Provider:   common.NotificationProviderTypeTwilio,
 		Properties: []cmodels.Property{}, // Empty properties
 	}
 
@@ -1490,7 +1491,7 @@ func (suite *ExportServiceTestSuite) TestExportNotificationSenders_WildcardParti
 	mockSender1 := &common.NotificationSenderDTO{
 		ID:         "sender1",
 		Name:       "Twilio Sender",
-		Provider:   common.MessageProviderTypeTwilio,
+		Provider:   common.NotificationProviderTypeTwilio,
 		Properties: []cmodels.Property{*mockProperty1},
 	}
 
@@ -1498,14 +1499,15 @@ func (suite *ExportServiceTestSuite) TestExportNotificationSenders_WildcardParti
 	mockSender3 := &common.NotificationSenderDTO{
 		ID:         "sender3",
 		Name:       "Vonage Sender",
-		Provider:   common.MessageProviderTypeVonage,
+		Provider:   common.NotificationProviderTypeVonage,
 		Properties: []cmodels.Property{*mockProperty3},
 	}
 
 	// Create list with 3 senders but sender2 will fail to retrieve
 	mockSenderList := []common.NotificationSenderDTO{*mockSender1, *mockSender3}
 
-	suite.mockNotificationService.EXPECT().ListSenders(mock.Anything).Return(mockSenderList, nil)
+	suite.mockNotificationService.EXPECT().
+		ListSenders(mock.Anything, common.NotificationSenderType("")).Return(mockSenderList, nil)
 	suite.mockNotificationService.EXPECT().GetSender(mock.Anything, "sender1").Return(mockSender1, nil)
 	suite.mockNotificationService.EXPECT().GetSender(mock.Anything, "sender3").Return(mockSender3, nil)
 
@@ -2115,7 +2117,7 @@ func (suite *ExportServiceTestSuite) TestExportResourcesWithExporter_Notificatio
 	mockSender := &common.NotificationSenderDTO{
 		ID:         senderID,
 		Name:       "Test Sender",
-		Provider:   common.MessageProviderTypeTwilio,
+		Provider:   common.NotificationProviderTypeTwilio,
 		Properties: []cmodels.Property{*mockProperty},
 	}
 

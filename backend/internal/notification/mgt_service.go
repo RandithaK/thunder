@@ -38,7 +38,8 @@ import (
 type NotificationSenderMgtSvcInterface interface {
 	CreateSender(ctx context.Context, sender common.NotificationSenderDTO) (*common.NotificationSenderDTO,
 		*tidcommon.ServiceError)
-	ListSenders(ctx context.Context) ([]common.NotificationSenderDTO, *tidcommon.ServiceError)
+	ListSenders(ctx context.Context, senderType common.NotificationSenderType) ([]common.NotificationSenderDTO,
+		*tidcommon.ServiceError)
 	GetSender(ctx context.Context, id string) (*common.NotificationSenderDTO, *tidcommon.ServiceError)
 	GetSenderByName(ctx context.Context, name string) (*common.NotificationSenderDTO, *tidcommon.ServiceError)
 	UpdateSender(ctx context.Context, id string, sender common.NotificationSenderDTO) (*common.NotificationSenderDTO,
@@ -132,13 +133,14 @@ func (s *notificationSenderMgtService) CreateSender(
 	}, nil
 }
 
-// ListSenders retrieves all notification senders.
-func (s *notificationSenderMgtService) ListSenders(ctx context.Context) ([]common.NotificationSenderDTO,
-	*tidcommon.ServiceError) {
+func (s *notificationSenderMgtService) ListSenders(
+	ctx context.Context,
+	senderType common.NotificationSenderType,
+) ([]common.NotificationSenderDTO, *tidcommon.ServiceError) {
 	logger := log.GetLogger().With(log.String(log.LoggerKeyComponentName, "NotificationSenderMgtService"))
-	logger.Debug(ctx, "Listing all notification senders")
+	logger.Debug(ctx, "Listing notification senders", log.String("type", string(senderType)))
 
-	senders, err := s.notificationStore.listSenders(ctx)
+	senders, err := s.notificationStore.listSenders(ctx, senderType)
 	if err != nil {
 		logger.Error(ctx, "Failed to list notification senders", log.Error(err))
 		return nil, &tidcommon.InternalServerError

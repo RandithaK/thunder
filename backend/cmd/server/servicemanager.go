@@ -84,7 +84,6 @@ import (
 	"github.com/thunder-id/thunderid/internal/system/cryptolib"
 	dbprovider "github.com/thunder-id/thunderid/internal/system/database/provider"
 	declarativeresource "github.com/thunder-id/thunderid/internal/system/declarative_resource"
-	"github.com/thunder-id/thunderid/internal/system/email"
 	"github.com/thunder-id/thunderid/internal/system/export"
 	healthcheckservice "github.com/thunder-id/thunderid/internal/system/healthcheck/service"
 	i18nmgt "github.com/thunder-id/thunderid/internal/system/i18n/mgt"
@@ -317,8 +316,6 @@ func registerServices(mux *http.ServeMux, cacheManager cache.CacheManagerInterfa
 
 	attributeCacheService := attributecache.Initialize(runtimeStoreProvider)
 
-	emailClient := initEmailClient(ctx, logger)
-
 	// Initialize server-wide configuration after its handler dependencies.
 	serverConfigHandlers := map[serverconfig.ConfigName]serverconfig.ServerConfigHandlerInterface{
 		serverconfig.ConfigNameCORS:                  cors.OriginHandler{},
@@ -356,7 +353,6 @@ func registerServices(mux *http.ServeMux, cacheManager cache.CacheManagerInterfa
 			RoleAssignmentService: roleAssignmentService,
 			EntityProvider:        entityProvider,
 			AttributeCacheSvc:     attributeCacheService,
-			EmailClient:           emailClient,
 			TemplateService:       templateService,
 			OAuthSvc:              oauthAuthnService,
 			OIDCSvc:               oidcAuthnService,
@@ -465,6 +461,7 @@ func registerServices(mux *http.ServeMux, cacheManager cache.CacheManagerInterfa
 		openid4vpDefSvc,
 		openid4vciCredSvc,
 		serverConfigService,
+		notifSenderMgtSvc,
 	)
 
 	flowExecService, err := flowexec.Initialize(mux, flowMgtService, actorProvider,
@@ -559,17 +556,6 @@ func readSessionConfig(ctx context.Context, svc serverconfig.ServerConfigService
 	}
 	cfg, _ := merged.(flowsession.Config)
 	return cfg
-}
-
-// initEmailClient initializes the email client, returning nil if not configured.
-func initEmailClient(ctx context.Context, logger *log.Logger) email.EmailClientInterface {
-	client, err := email.Initialize()
-	if err != nil {
-		logger.Debug(ctx, "Email client not configured. "+
-			"EmailExecutor will be registered but will not send emails.", log.Error(err))
-		return nil
-	}
-	return client
 }
 
 // initializeFlowCoreAndExecutor initializes the flow core and executor services.

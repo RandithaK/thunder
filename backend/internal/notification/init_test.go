@@ -111,6 +111,7 @@ func (suite *InitTestSuite) TestInitialize_WithDeclarativeResourcesEnabled_FileL
 	twilioYAML := `id: "test-twilio-sender"
 name: "Test Twilio Sender"
 description: "Test Twilio notification sender"
+type: "message"
 provider: "twilio"
 properties:
   - name: "supported_channels"
@@ -132,6 +133,7 @@ properties:
 	vonageYAML := `id: "test-vonage-sender"
 name: "Test Vonage Sender"
 description: "Test Vonage notification sender"
+type: "message"
 provider: "vonage"
 properties:
   - name: "supported_channels"
@@ -335,6 +337,7 @@ func (suite *InitTestSuite) TestParseToNotificationSenderDTO_ValidYAML() {
 id: "twilio-sender-001"
 name: "Twilio SMS Sender"
 description: "Production Twilio SMS sender"
+type: "message"
 provider: "twilio"
 properties:
   - name: "supported_channels"
@@ -362,6 +365,28 @@ properties:
 	suite.Len(sender.Properties, 4)
 }
 
+// TestParseToNotificationSenderDTO_CaseInsensitive tests parsing with different cases for type and provider.
+func (suite *InitTestSuite) TestParseToNotificationSenderDTO_CaseInsensitive() {
+	yamlData := `
+id: "test-case-sender"
+name: "Test Case Sender"
+type: "EMAIL"
+provider: "smtp"
+properties:
+  - name: "host"
+    value: "smtp.example.com"
+`
+
+	sender, err := parseToNotificationSenderDTO([]byte(yamlData))
+
+	suite.NoError(err)
+	suite.NotNil(sender)
+	suite.Equal("test-case-sender", sender.ID)
+	suite.Equal("Test Case Sender", sender.Name)
+	suite.Equal(common.NotificationSenderTypeEmail, sender.Type)
+	suite.Equal(common.NotificationProviderTypeSMTP, sender.Provider)
+}
+
 // TestParseToNotificationSenderDTO_InvalidYAML tests parsing invalid YAML.
 func (suite *InitTestSuite) TestParseToNotificationSenderDTO_InvalidYAML() {
 	yamlData := `
@@ -380,6 +405,7 @@ func (suite *InitTestSuite) TestParseToNotificationSenderDTO_MinimalYAML() {
 	yamlData := `
 id: "minimal-sender"
 name: "Minimal Sender"
+type: "message"
 provider: "custom"
 properties:
   - name: "supported_channels"
@@ -406,6 +432,7 @@ func (suite *InitTestSuite) TestParseToNotificationSenderDTO_WithSupportedChanne
 	yamlData := `
 id: "minimal-sender"
 name: "Minimal Sender"
+type: "message"
 provider: "custom"
 properties:
   - name: "url"
@@ -433,43 +460,13 @@ properties:
 	suite.True(hasEmail, "Expected supported_channels property to be 'email'")
 }
 
-// TestParseProviderType_ValidProviders tests parsing valid provider types.
-func (suite *InitTestSuite) TestParseProviderType_ValidProviders() {
-	tests := []struct {
-		name     string
-		input    string
-		expected string
-	}{
-		{"Twilio lowercase", "twilio", "twilio"},
-		{"Twilio uppercase", "TWILIO", "twilio"},
-		{"Vonage lowercase", "vonage", "vonage"},
-		{"Custom lowercase", "custom", "custom"},
-	}
-
-	for _, tt := range tests {
-		suite.Run(tt.name, func() {
-			provider, err := parseProviderType(tt.input)
-			suite.NoError(err)
-			suite.Equal(tt.expected, string(provider))
-		})
-	}
-}
-
-// TestParseProviderType_InvalidProvider tests parsing invalid provider type.
-func (suite *InitTestSuite) TestParseProviderType_InvalidProvider() {
-	provider, err := parseProviderType("invalid_provider")
-
-	suite.Error(err)
-	suite.Equal("", string(provider))
-	suite.Contains(err.Error(), "unsupported provider type")
-}
-
 // TestParseToNotificationSenderDTO_VonageYAML tests parsing Vonage YAML configuration.
 func (suite *InitTestSuite) TestParseToNotificationSenderDTO_VonageYAML() {
 	yamlData := `
 id: "vonage-sender-001"
 name: "Vonage SMS Sender"
 description: "Production Vonage SMS sender"
+type: "message"
 provider: "vonage"
 properties:
   - name: "supported_channels"
@@ -495,27 +492,6 @@ properties:
 	suite.Equal("Production Vonage SMS sender", sender.Description)
 	suite.Equal("vonage", string(sender.Provider))
 	suite.Len(sender.Properties, 4)
-}
-
-// TestParseProviderType_CaseSensitivity tests parsing provider type with different cases.
-func (suite *InitTestSuite) TestParseProviderType_CaseSensitivity() {
-	tests := []struct {
-		name     string
-		input    string
-		expected string
-	}{
-		{"Vonage mixed case", "VoNaGe", "vonage"},
-		{"Twilio mixed case", "TwIlIo", "twilio"},
-		{"Custom mixed case", "CuStOm", "custom"},
-	}
-
-	for _, tt := range tests {
-		suite.Run(tt.name, func() {
-			provider, err := parseProviderType(tt.input)
-			suite.NoError(err)
-			suite.Equal(tt.expected, string(provider))
-		})
-	}
 }
 
 // TestInitialize_WithDeclarativeResourcesEnabled_InvalidYAML tests Initialize with declarative resources

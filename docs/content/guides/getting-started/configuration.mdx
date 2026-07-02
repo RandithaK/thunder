@@ -725,21 +725,9 @@ The key type under `crypto.keys` determines the algorithm in `id_token_signing_a
 
 ## Email Configuration
 
-<ProductName /> sends emails through an SMTP server for features such as magic link authentication and user invitations. This configuration is optional. Without a configured SMTP server, email-dependent features remain unavailable. Add the following configuration to `deployment.yaml` to configure an SMTP server.
+<ProductName /> requires a configured Email Sender to deliver emails for features such as magic link authentication and user invitations. This configuration is declarative and no longer part of `deployment.yaml`.
 
-```yaml
-email:
-  smtp:
-    host: "smtp.example.com"
-    port: 587
-    username: "your-username"
-    password: "your-password"
-    from_address: "noreply@example.com"
-    enable_start_tls: true
-    enable_authentication: true
-```
-
-For the full property reference and provider-specific examples, see [Configure SMTP Server](../../guides/smtp-server/smtp-server-configuration).
+For the full property reference and provider-specific setup (such as SMTP or API based), see [Email Providers](../guides/notifications/email-providers.mdx).
 
 ## Notification Configuration
 

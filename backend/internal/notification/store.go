@@ -40,7 +40,7 @@ var (
 // notificationStoreInterface defines the interface for notification sender storage operations.
 type notificationStoreInterface interface {
 	createSender(ctx context.Context, sender common.NotificationSenderDTO) error
-	listSenders(ctx context.Context) ([]common.NotificationSenderDTO, error)
+	listSenders(ctx context.Context, senderType common.NotificationSenderType) ([]common.NotificationSenderDTO, error)
 	getSenderByID(ctx context.Context, id string) (*common.NotificationSenderDTO, error)
 	getSenderByName(ctx context.Context, name string) (*common.NotificationSenderDTO, error)
 	updateSender(ctx context.Context, id string, sender common.NotificationSenderDTO) error
@@ -96,14 +96,22 @@ func (s *notificationStore) createSender(ctx context.Context, sender common.Noti
 	return nil
 }
 
-// listSenders retrieves all notification senders
-func (s *notificationStore) listSenders(ctx context.Context) ([]common.NotificationSenderDTO, error) {
+// listSenders retrieves notification senders, optionally filtered by type.
+func (s *notificationStore) listSenders(
+	ctx context.Context,
+	senderType common.NotificationSenderType,
+) ([]common.NotificationSenderDTO, error) {
 	dbClient, err := s.dbProvider.GetConfigDBClient()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get database client: %w", err)
 	}
 
-	results, err := dbClient.QueryContext(ctx, queryGetAllNotificationSenders, s.deploymentID)
+	var results []map[string]interface{}
+	if senderType != "" {
+		results, err = dbClient.QueryContext(ctx, queryGetNotificationSendersByType, string(senderType), s.deploymentID)
+	} else {
+		results, err = dbClient.QueryContext(ctx, queryGetAllNotificationSenders, s.deploymentID)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %w", err)
 	}
@@ -273,7 +281,7 @@ func (s *notificationStore) buildSenderFromResultRow(
 		Name:        name,
 		Description: description,
 		Type:        common.NotificationSenderType(_type),
-		Provider:    common.MessageProviderType(provider),
+		Provider:    common.NotificationProviderType(provider),
 		Properties:  []cmodels.Property{},
 	}
 

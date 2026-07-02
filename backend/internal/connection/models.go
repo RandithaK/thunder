@@ -47,14 +47,14 @@ var idpBackedVendors = []idpBackedVendor{
 // smsBackedVendor maps a connection path segment to an underlying message-provider type.
 type smsBackedVendor struct {
 	name     string
-	provider ncommon.MessageProviderType
+	provider ncommon.NotificationProviderType
 }
 
 // smsBackedVendors is the set of connection types backed by the notification-sender service.
-// The custom SMS gateway (ncommon.MessageProviderTypeCustom) is intentionally not exposed here.
+// The custom SMS gateway (ncommon.NotificationProviderTypeCustom) is intentionally not exposed here.
 var smsBackedVendors = []smsBackedVendor{
-	{name: "twilio", provider: ncommon.MessageProviderTypeTwilio},
-	{name: "vonage", provider: ncommon.MessageProviderTypeVonage},
+	{name: "twilio", provider: ncommon.NotificationProviderTypeTwilio},
+	{name: "vonage", provider: ncommon.NotificationProviderTypeVonage},
 }
 
 // connectionTypeSummary is a single entry in the GET /connections listing. It carries only

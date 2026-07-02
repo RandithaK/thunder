@@ -29,6 +29,7 @@ import (
 	flowmgt "github.com/thunder-id/thunderid/internal/flow/mgt"
 	"github.com/thunder-id/thunderid/internal/group"
 	"github.com/thunder-id/thunderid/internal/idp"
+	"github.com/thunder-id/thunderid/internal/notification"
 	"github.com/thunder-id/thunderid/internal/ou"
 	"github.com/thunder-id/thunderid/internal/resource"
 	"github.com/thunder-id/thunderid/internal/role"
@@ -60,6 +61,7 @@ func Initialize(
 	presentationDefinitionService presentation.PresentationDefinitionServiceInterface,
 	credentialConfigurationService credential.CredentialConfigurationServiceInterface,
 	serverConfigService serverconfig.ServerConfigService,
+	notificationSenderService notification.NotificationSenderMgtSvcInterface,
 ) ImportServiceInterface {
 	importService := newImportService(
 		applicationService,
@@ -79,6 +81,7 @@ func Initialize(
 		presentationDefinitionService,
 		credentialConfigurationService,
 		serverConfigService,
+		notificationSenderService,
 	)
 	importHandler := newImportHandler(importService)
 

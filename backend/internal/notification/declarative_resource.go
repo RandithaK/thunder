@@ -69,7 +69,7 @@ func (e *notificationSenderExporter) GetParameterizerType() string {
 
 // GetAllResourceIDs retrieves all notification sender IDs.
 func (e *notificationSenderExporter) GetAllResourceIDs(ctx context.Context) ([]string, *tidcommon.ServiceError) {
-	senders, err := e.service.ListSenders(ctx)
+	senders, err := e.service.ListSenders(ctx, "")
 	if err != nil {
 		return nil, err
 	}
@@ -160,16 +160,21 @@ func parseToNotificationSenderDTO(data []byte) (*common.NotificationSenderDTO, e
 		return nil, err
 	}
 
-	provider, err := parseProviderType(senderRequest.Provider)
-	if err != nil {
-		return nil, err
+	senderType := common.NotificationSenderType(strings.ToUpper(string(senderRequest.Type)))
+	if !senderType.Valid() {
+		return nil, fmt.Errorf("unsupported sender type: %s", string(senderRequest.Type))
+	}
+
+	provider := common.NotificationProviderType(strings.ToLower(string(senderRequest.Provider)))
+	if !provider.Valid() {
+		return nil, fmt.Errorf("unsupported provider type: %s", string(senderRequest.Provider))
 	}
 
 	senderDTO := &common.NotificationSenderDTO{
 		ID:          senderRequest.ID,
 		Name:        senderRequest.Name,
 		Description: senderRequest.Description,
-		Type:        common.NotificationSenderTypeMessage,
+		Type:        senderType,
 		Provider:    provider,
 	}
 
@@ -187,26 +192,6 @@ func parseToNotificationSenderDTO(data []byte) (*common.NotificationSenderDTO, e
 	}
 
 	return senderDTO, nil
-}
-
-func parseProviderType(providerStr string) (common.MessageProviderType, error) {
-	// Convert string to lowercase for case-insensitive matching
-	providerStrLower := common.MessageProviderType(strings.ToLower(providerStr))
-
-	// Check if it's a valid provider
-	supportedProviders := []common.MessageProviderType{
-		common.MessageProviderTypeVonage,
-		common.MessageProviderTypeTwilio,
-		common.MessageProviderTypeCustom,
-	}
-
-	for _, supportedProvider := range supportedProviders {
-		if supportedProvider == providerStrLower {
-			return supportedProvider, nil
-		}
-	}
-
-	return "", fmt.Errorf("unsupported provider type: %s", providerStr)
 }
 
 // validateNotificationSenderWrapper wraps validateNotificationSender to match ResourceConfig.Validator signature.

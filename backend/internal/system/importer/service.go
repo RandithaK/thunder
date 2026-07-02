@@ -36,8 +36,10 @@ import (
 	flowmgt "github.com/thunder-id/thunderid/internal/flow/mgt"
 	"github.com/thunder-id/thunderid/internal/group"
 	"github.com/thunder-id/thunderid/internal/idp"
+	notificationcommon "github.com/thunder-id/thunderid/internal/notification/common"
 	"github.com/thunder-id/thunderid/internal/resource"
 	"github.com/thunder-id/thunderid/internal/role"
+	"github.com/thunder-id/thunderid/internal/system/cmodels"
 	"github.com/thunder-id/thunderid/internal/system/log"
 	"github.com/thunder-id/thunderid/internal/user"
 	"github.com/thunder-id/thunderid/internal/vc/credential"
@@ -200,6 +202,15 @@ type credentialConfigurationAdapter interface {
 		*credential.CredentialConfigurationDTO, *tidcommon.ServiceError)
 }
 
+type notificationSenderAdapter interface {
+	CreateSender(ctx context.Context, sender notificationcommon.NotificationSenderDTO) (
+		*notificationcommon.NotificationSenderDTO, *tidcommon.ServiceError)
+	GetSenderByName(ctx context.Context, name string) (
+		*notificationcommon.NotificationSenderDTO, *tidcommon.ServiceError)
+	UpdateSender(ctx context.Context, id string, sender notificationcommon.NotificationSenderDTO) (
+		*notificationcommon.NotificationSenderDTO, *tidcommon.ServiceError)
+}
+
 // ImportServiceInterface defines runtime resource import and declarative resource deletion operations.
 type ImportServiceInterface interface {
 	ImportResources(ctx context.Context, request *ImportRequest) (*ImportResponse, *tidcommon.ServiceError)
@@ -233,6 +244,7 @@ type importService struct {
 	presentationDefinitionService  presentationDefinitionAdapter
 	credentialConfigurationService credentialConfigurationAdapter
 	serverConfigService            serverConfigAdapter
+	notificationSenderService      notificationSenderAdapter
 }
 
 func newImportService(
@@ -253,6 +265,7 @@ func newImportService(
 	presentationDefinitionService presentationDefinitionAdapter,
 	credentialConfigurationService credentialConfigurationAdapter,
 	serverConfigService serverConfigAdapter,
+	notificationSenderService notificationSenderAdapter,
 ) ImportServiceInterface {
 	return &importService{
 		applicationService:             applicationService,
@@ -272,6 +285,7 @@ func newImportService(
 		presentationDefinitionService:  presentationDefinitionService,
 		credentialConfigurationService: credentialConfigurationService,
 		serverConfigService:            serverConfigService,
+		notificationSenderService:      notificationSenderService,
 	}
 }
 
@@ -431,6 +445,8 @@ func (s *importService) importDocument(
 		return s.importCredentialConfiguration(ctx, doc, options, dryRun)
 	case resourceTypeServerConfig:
 		return s.importServerConfig(ctx, doc, dryRun)
+	case resourceTypeNotificationSender:
+		return s.importNotificationSender(ctx, doc, dryRun)
 	default:
 		return ImportItemOutcome{
 			ResourceType: doc.ResourceType,
@@ -946,4 +962,120 @@ func isNotFoundServiceError(svcErr *tidcommon.ServiceError) bool {
 	}
 	_, ok := notFoundErrorCodes[svcErr.Code]
 	return ok
+}
+
+// importNotificationSender imports a notification sender resource from a YAML document.
+func (s *importService) importNotificationSender(
+	ctx context.Context, doc parsedDocument, dryRun bool,
+) ImportItemOutcome {
+	if s.notificationSenderService == nil {
+		return ImportItemOutcome{
+			ResourceType: resourceTypeNotificationSender,
+			Status:       statusFailed,
+			Code:         ErrorInvalidImportRequest.Code,
+			Message:      "notification sender adapter is not configured",
+		}
+	}
+
+	var req notificationcommon.NotificationSenderRequestWithID
+	if err := doc.Node.Decode(&req); err != nil {
+		return ImportItemOutcome{
+			ResourceType: resourceTypeNotificationSender,
+			ResourceID:   req.ID,
+			ResourceName: req.Name,
+			Operation:    operationCreate,
+			Status:       statusFailed,
+			Code:         ErrorInvalidYAMLContent.Code,
+			Message:      "Failed to unmarshal notification sender",
+		}
+	}
+
+	dto := notificationcommon.NotificationSenderDTO{
+		ID:          req.ID,
+		Name:        req.Name,
+		Description: req.Description,
+		Provider:    req.Provider,
+		Type:        req.Type,
+	}
+
+	if len(req.Properties) > 0 {
+		properties := make([]cmodels.Property, 0, len(req.Properties))
+		for _, propDTO := range req.Properties {
+			prop, err := cmodels.NewProperty(propDTO.Name, propDTO.Value, propDTO.IsSecret)
+			if err != nil {
+				return ImportItemOutcome{
+					ResourceType: resourceTypeNotificationSender,
+					ResourceID:   req.ID,
+					ResourceName: req.Name,
+					Operation:    operationCreate,
+					Status:       statusFailed,
+					Code:         ErrorInvalidYAMLContent.Code,
+					Message:      "Invalid property configuration",
+				}
+			}
+			properties = append(properties, *prop)
+		}
+		dto.Properties = properties
+	}
+
+	existing, _ := s.notificationSenderService.GetSenderByName(ctx, dto.Name)
+
+	if dryRun {
+		op := operationCreate
+		if existing != nil {
+			op = operationUpdate
+		}
+		return ImportItemOutcome{
+			ResourceType: resourceTypeNotificationSender,
+			ResourceID:   dto.ID,
+			ResourceName: dto.Name,
+			Operation:    op,
+			Status:       statusSuccess,
+		}
+	}
+
+	if existing != nil {
+		dto.ID = existing.ID
+		updated, svcErr := s.notificationSenderService.UpdateSender(ctx, dto.ID, dto)
+		if svcErr != nil {
+			return ImportItemOutcome{
+				ResourceType: resourceTypeNotificationSender,
+				ResourceID:   dto.ID,
+				ResourceName: dto.Name,
+				Operation:    operationUpdate,
+				Status:       statusFailed,
+				Code:         svcErr.Code,
+				Message:      svcErr.Error.DefaultValue,
+			}
+		}
+
+		return ImportItemOutcome{
+			ResourceType: resourceTypeNotificationSender,
+			ResourceID:   updated.ID,
+			ResourceName: updated.Name,
+			Operation:    operationUpdate,
+			Status:       statusSuccess,
+		}
+	}
+
+	created, svcErr := s.notificationSenderService.CreateSender(ctx, dto)
+	if svcErr != nil {
+		return ImportItemOutcome{
+			ResourceType: resourceTypeNotificationSender,
+			ResourceID:   dto.ID,
+			ResourceName: dto.Name,
+			Operation:    operationCreate,
+			Status:       statusFailed,
+			Code:         svcErr.Code,
+			Message:      svcErr.Error.DefaultValue,
+		}
+	}
+
+	return ImportItemOutcome{
+		ResourceType: resourceTypeNotificationSender,
+		ResourceID:   created.ID,
+		ResourceName: created.Name,
+		Operation:    operationCreate,
+		Status:       statusSuccess,
+	}
 }
