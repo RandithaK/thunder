@@ -24,60 +24,21 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type ValidatorTestSuite struct {
+type ModelTestSuite struct {
 	suite.Suite
 }
 
-func TestValidatorTestSuite(t *testing.T) {
-	suite.Run(t, new(ValidatorTestSuite))
+func TestModelTestSuite(t *testing.T) {
+	suite.Run(t, new(ModelTestSuite))
 }
 
-func (suite *ValidatorTestSuite) TestNotificationProviderType_Valid() {
-	cases := []struct {
-		name     string
-		provider NotificationProviderType
-		expected bool
-	}{
-		{"Vonage", NotificationProviderTypeVonage, true},
-		{"Twilio", NotificationProviderTypeTwilio, true},
-		{"Custom", NotificationProviderTypeCustom, true},
-		{"SMTP", NotificationProviderTypeSMTP, true},
-		{"HTTP", NotificationProviderTypeHTTP, true},
-		{"Invalid", NotificationProviderType("invalid"), false},
-	}
-
-	for _, tc := range cases {
-		suite.Run(tc.name, func() {
-			suite.Equal(tc.expected, tc.provider.Valid())
-		})
-	}
-}
-
-func (suite *ValidatorTestSuite) TestNotificationSenderType_Valid() {
-	cases := []struct {
-		name     string
-		sender   NotificationSenderType
-		expected bool
-	}{
-		{"Message", NotificationSenderTypeMessage, true},
-		{"Email", NotificationSenderTypeEmail, true},
-		{"Invalid", NotificationSenderType("invalid"), false},
-	}
-
-	for _, tc := range cases {
-		suite.Run(tc.name, func() {
-			suite.Equal(tc.expected, tc.sender.Valid())
-		})
-	}
-}
-
-func (suite *ValidatorTestSuite) TestEmailData_Validate() {
+func (suite *ModelTestSuite) TestEmailData_Validate() {
 	cases := []struct {
 		name        string
 		emailData   *EmailData
 		expectError bool
 		errorString string
-		checkFunc   func(*EmailData) // Optional function to verify trimmed data
+		checkFunc   func(*EmailData)
 	}{
 		{
 			name: "Success with trimming",

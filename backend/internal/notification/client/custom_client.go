@@ -40,7 +40,7 @@ const (
 // CustomClient implements the NotificationClientInterface for sending messages via a custom message provider.
 type CustomClient struct {
 	name       string
-	config     httpWebhookConfig
+	config     httpTransportConfig
 	httpClient syshttp.HTTPClientInterface
 }
 
@@ -51,7 +51,7 @@ func newCustomClient(ctx context.Context, sender common.NotificationSenderDTO) (
 	client := &CustomClient{}
 	client.name = sender.Name
 
-	config, err := parseHTTPWebhookConfig(ctx, sender, logger)
+	config, err := parseHTTPTransportConfig(ctx, sender, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -89,13 +89,13 @@ func (c *CustomClient) sendSMS(ctx context.Context, data common.MessageData) err
 	var req *http.Request
 	var err error
 
-	if c.config.contentType == "JSON" {
+	if c.config.contentType == contentTypeJSON {
 		req, err = http.NewRequest(c.config.httpMethod, c.config.url, bytes.NewBufferString(data.Body))
 		if err != nil {
 			return fmt.Errorf("failed to create HTTP request: %w", err)
 		}
 		req.Header.Set(serverconst.ContentTypeHeaderName, serverconst.ContentTypeJSON)
-	} else if c.config.contentType == "FORM" {
+	} else if c.config.contentType == contentTypeForm {
 		formData := url.Values{}
 		lines := strings.Split(data.Body, "\n")
 		for _, line := range lines {

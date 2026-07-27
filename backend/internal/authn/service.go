@@ -210,11 +210,19 @@ func (as *authenticationService) SendOTP(ctx context.Context, senderID string, c
 	recipient string) (string, *tidcommon.ServiceError) {
 	logger := log.GetLogger().With(log.String(log.LoggerKeyComponentName, svcLoggerComponentName))
 
-	attributeName := "mobile_number"
-	templateType := template.TemplateTypeSMS
-	if channel == notifcommon.ChannelTypeEmail {
+	var attributeName string
+	var templateType template.TemplateType
+
+	switch channel {
+	case notifcommon.ChannelTypeEmail:
 		attributeName = "email_address"
 		templateType = template.TemplateTypeEmail
+	case notifcommon.ChannelTypeSMS:
+		attributeName = "mobile_number"
+		templateType = template.TemplateTypeSMS
+	default:
+		logger.Error(ctx, "Unsupported channel type for OTP", log.String("channel", string(channel)))
+		return "", &tidcommon.InternalServerError
 	}
 
 	sessionToken, otpValue, _, svcErr := as.otpService.GenerateOTP(ctx, recipient, attributeName)
@@ -238,8 +246,23 @@ func (as *authenticationService) SendOTP(ctx context.Context, senderID string, c
 		return "", renderErr
 	}
 
-	notifData := notifcommon.MessageData{Recipient: recipient, Body: rendered.Body}
-	if sendErr := as.notifSenderSvc.SendMessage(ctx, channel, senderID, notifData); sendErr != nil {
+	var sendErr *tidcommon.ServiceError
+	switch channel {
+	case notifcommon.ChannelTypeEmail:
+		sendErr = as.notifSenderSvc.SendEmail(ctx, senderID, notifcommon.EmailData{
+			To:      []string{recipient},
+			Subject: rendered.Subject,
+			Body:    rendered.Body,
+			IsHTML:  rendered.IsHTML,
+		})
+	case notifcommon.ChannelTypeSMS:
+		sendErr = as.notifSenderSvc.SendMessage(ctx, channel, senderID, notifcommon.MessageData{
+			Recipient: recipient,
+			Body:      rendered.Body,
+		})
+	}
+
+	if sendErr != nil {
 		if sendErr.Type == tidcommon.ServerErrorType {
 			logger.Error(ctx, "Failed to send OTP notification", log.String("error", sendErr.Code))
 			return "", &tidcommon.InternalServerError

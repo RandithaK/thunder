@@ -23,6 +23,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -33,10 +34,10 @@ import (
 	"github.com/thunder-id/thunderid/internal/system/log"
 )
 
-// httpEmailClient implements the EmailClientInterface for sending emails via a custom HTTP webhook.
+// httpEmailClient implements the EmailClientInterface for sending emails via a custom HTTP email provider.
 type httpEmailClient struct {
 	name       string
-	config     httpWebhookConfig
+	config     httpTransportConfig
 	httpClient syshttp.HTTPClientInterface
 	logger     *log.Logger
 }
@@ -49,7 +50,7 @@ func newHTTPEmailClient(ctx context.Context, sender common.NotificationSenderDTO
 	client.name = sender.Name
 	client.logger = logger
 
-	config, err := parseHTTPWebhookConfig(ctx, sender, logger)
+	config, err := parseHTTPTransportConfig(ctx, sender, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -64,11 +65,14 @@ func (c *httpEmailClient) GetName() string {
 	return c.name
 }
 
-// Send dispatches an email notification via the custom webhook.
+// Send dispatches an email notification via the custom HTTP provider.
 func (c *httpEmailClient) Send(ctx context.Context, data common.EmailData) error {
 	if c.logger.IsDebugEnabled() {
-		maskedTo := log.MaskedStrings("to", data.To).Value.([]string)
-		c.logger.Debug(ctx, "Sending Email via HTTP client", log.String("to", strings.Join(maskedTo, ",")))
+		if maskedTo, ok := log.MaskedStrings("to", data.To).Value.([]string); ok {
+			c.logger.Debug(ctx, "Sending Email via HTTP client", log.String("to", strings.Join(maskedTo, ",")))
+		} else {
+			c.logger.Debug(ctx, "Sending Email via HTTP client")
+		}
 	}
 
 	if err := data.Validate(); err != nil {
@@ -78,49 +82,17 @@ func (c *httpEmailClient) Send(ctx context.Context, data common.EmailData) error
 	var req *http.Request
 	var err error
 
-	if c.config.contentType == "JSON" {
-		payload := map[string]interface{}{
-			"to":      data.To,
-			"cc":      data.CC,
-			"bcc":     data.BCC,
-			"subject": data.Subject,
-			"body":    data.Body,
-			"is_html": data.IsHTML,
-		}
-		jsonBytes, marshalErr := json.Marshal(payload)
-		if marshalErr != nil {
-			return fmt.Errorf("failed to marshal JSON payload: %w", marshalErr)
-		}
-
-		req, err = http.NewRequest(c.config.httpMethod, c.config.url, bytes.NewBuffer(jsonBytes))
-		if err != nil {
-			return fmt.Errorf("failed to create HTTP request: %w", err)
-		}
-		req.Header.Set(serverconst.ContentTypeHeaderName, serverconst.ContentTypeJSON)
-	} else if c.config.contentType == "FORM" {
-		formData := url.Values{}
-		formData.Add("to", strings.Join(data.To, ","))
-		if len(data.CC) > 0 {
-			formData.Add("cc", strings.Join(data.CC, ","))
-		}
-		if len(data.BCC) > 0 {
-			formData.Add("bcc", strings.Join(data.BCC, ","))
-		}
-		formData.Add("subject", data.Subject)
-		formData.Add("body", data.Body)
-		if data.IsHTML {
-			formData.Add("is_html", "true")
-		} else {
-			formData.Add("is_html", "false")
-		}
-
-		req, err = http.NewRequest(c.config.httpMethod, c.config.url, strings.NewReader(formData.Encode()))
-		if err != nil {
-			return fmt.Errorf("failed to create HTTP request: %w", err)
-		}
-		req.Header.Set(serverconst.ContentTypeHeaderName, serverconst.ContentTypeFormURLEncoded)
-	} else {
+	switch c.config.contentType {
+	case contentTypeJSON:
+		req, err = c.buildJSONRequest(ctx, data)
+	case contentTypeForm:
+		req, err = c.buildFormRequest(ctx, data)
+	default:
 		return fmt.Errorf("unsupported content type: %s", c.config.contentType)
+	}
+
+	if err != nil {
+		return err
 	}
 
 	for key, value := range c.config.httpHeaders {
@@ -140,8 +112,67 @@ func (c *httpEmailClient) Send(ctx context.Context, data common.EmailData) error
 	c.logger.Debug(ctx, "Received response from HTTP Email provider", log.Int("statusCode", resp.StatusCode))
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		bodySnippet, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
+		if len(bodySnippet) > 0 {
+			return fmt.Errorf("HTTP Email send failed, status: %d, body: %s",
+				resp.StatusCode, strings.TrimSpace(string(bodySnippet)))
+		}
 		return fmt.Errorf("HTTP Email send failed, status: %d", resp.StatusCode)
 	}
 
 	return nil
+}
+
+// buildJSONRequest builds an HTTP request with a JSON payload.
+func (c *httpEmailClient) buildJSONRequest(ctx context.Context, data common.EmailData) (*http.Request, error) {
+	payload := map[string]interface{}{
+		"to":      data.To,
+		"subject": data.Subject,
+		"body":    data.Body,
+		"is_html": data.IsHTML,
+	}
+	if len(data.CC) > 0 {
+		payload["cc"] = data.CC
+	}
+	if len(data.BCC) > 0 {
+		payload["bcc"] = data.BCC
+	}
+
+	jsonBytes, marshalErr := json.Marshal(payload)
+	if marshalErr != nil {
+		return nil, fmt.Errorf("failed to marshal JSON payload: %w", marshalErr)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, c.config.httpMethod, c.config.url, bytes.NewBuffer(jsonBytes))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+	req.Header.Set(serverconst.ContentTypeHeaderName, serverconst.ContentTypeJSON)
+	return req, nil
+}
+
+// buildFormRequest builds an HTTP request with a form payload.
+func (c *httpEmailClient) buildFormRequest(ctx context.Context, data common.EmailData) (*http.Request, error) {
+	formData := url.Values{}
+	formData.Add("to", strings.Join(data.To, ","))
+	if len(data.CC) > 0 {
+		formData.Add("cc", strings.Join(data.CC, ","))
+	}
+	if len(data.BCC) > 0 {
+		formData.Add("bcc", strings.Join(data.BCC, ","))
+	}
+	formData.Add("subject", data.Subject)
+	formData.Add("body", data.Body)
+	if data.IsHTML {
+		formData.Add("is_html", "true")
+	} else {
+		formData.Add("is_html", "false")
+	}
+
+	req, err := http.NewRequestWithContext(ctx, c.config.httpMethod, c.config.url, strings.NewReader(formData.Encode()))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+	req.Header.Set(serverconst.ContentTypeHeaderName, serverconst.ContentTypeFormURLEncoded)
+	return req, nil
 }

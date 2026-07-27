@@ -56,6 +56,7 @@ type smsBackedVendor struct {
 	provider ncommon.NotificationProviderType
 }
 
+// smsBackedVendors is the set of connection types backed by the message notification-sender service.
 var smsBackedVendors = []smsBackedVendor{
 	{name: "twilio", provider: ncommon.NotificationProviderTypeTwilio},
 	{name: "vonage", provider: ncommon.NotificationProviderTypeVonage},
@@ -70,8 +71,8 @@ type emailBackedVendor struct {
 
 // emailBackedVendors is the set of connection types backed by the email notification-sender service.
 var emailBackedVendors = []emailBackedVendor{
-	{name: "smtp", provider: ncommon.NotificationProviderTypeSMTP},
-	{name: "http", provider: ncommon.NotificationProviderTypeHTTP},
+	{name: "smtp-email", provider: ncommon.NotificationProviderTypeSMTP},
+	{name: "http-email", provider: ncommon.NotificationProviderTypeHTTP},
 }
 
 // connectionCategory is the functional category of a connection instance, used as the

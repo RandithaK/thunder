@@ -29,8 +29,6 @@ import (
 	"github.com/thunder-id/thunderid/tests/integration/testutils"
 )
 
-
-
 var (
 	basicRecoveryOU = testutils.OrganizationUnit{
 		Handle:      "basic-recovery-test-ou",

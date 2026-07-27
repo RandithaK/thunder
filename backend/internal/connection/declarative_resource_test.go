@@ -209,18 +209,18 @@ func (s *DeclarativeResourceTestSuite) TestConnectionModelToDTORoundTripsEmailVe
 		wantProvider ncommon.NotificationProviderType
 	}{
 		{
-			"smtp",
+			"smtp-email",
 			connectionExportModel{
-				ID: "s4", Type: "smtp", Name: "n", Host: "smtp.example.com", Port: "587",
-				Username: "user", Password: "pwd", SenderAddress: "no-reply@example.com",
+				ID: "s4", Type: "smtp-email", Name: "n", Host: "smtp.example.com", Port: "587",
+				Username: "user", Password: "pwd", FromAddress: "no-reply@example.com",
 				TLS: "starttls", EnableAuthentication: "true",
 			},
 			ncommon.NotificationProviderTypeSMTP,
 		},
 		{
-			"http",
+			"http-email",
 			connectionExportModel{
-				ID: "s5", Type: "http", Name: "n", URL: "https://api.example.com/email",
+				ID: "s5", Type: "http-email", Name: "n", URL: "https://api.example.com/email",
 				HTTPMethod: "POST", HTTPHeaders: "Auth: token", ContentType: "application/json",
 			},
 			ncommon.NotificationProviderTypeHTTP,
@@ -307,7 +307,7 @@ httpMethod: POST
 func (s *DeclarativeResourceTestSuite) TestParseConnectionFromNodeSMTPEmailVendor() {
 	doc := `
 id: prod-smtp
-type: smtp
+type: smtp-email
 name: Prod SMTP
 host: smtp.example.com
 port: 587
@@ -330,7 +330,7 @@ enableAuthentication: "true"
 func (s *DeclarativeResourceTestSuite) TestParseConnectionFromNodeHTTPEmailVendor() {
 	doc := `
 id: prod-http
-type: http
+type: http-email
 name: Prod HTTP Email
 url: https://api.example.com/send
 httpMethod: POST
@@ -439,8 +439,8 @@ func (s *DeclarativeResourceTestSuite) TestGetResourceRulesForResourceSecretSele
 		{connectionExportModel{Type: "google"}, nil}, // no secret set -> nothing to externalize
 		{connectionExportModel{Type: "twilio"}, []string{"AuthToken"}},
 		{connectionExportModel{Type: "vonage"}, []string{"APISecret"}},
-		{connectionExportModel{Type: "smtp", Password: "p"}, []string{"Password"}},
-		{connectionExportModel{Type: "http"}, nil},
+		{connectionExportModel{Type: "smtp-email", Password: "p"}, []string{"Password"}},
+		{connectionExportModel{Type: "http-email"}, nil},
 		{connectionExportModel{Type: smsGatewayVendorName}, nil},
 	}
 	for _, tc := range cases {
@@ -491,7 +491,7 @@ func (s *DeclarativeResourceTestSuite) TestGetResourceByIDSmtp() {
 	s.Equal("My SMTP", name)
 	model, ok := resource.(*connectionExportModel)
 	s.Require().True(ok)
-	s.Equal("smtp", model.Type)
+	s.Equal("smtp-email", model.Type)
 	s.Equal("smtp.example.com", model.Host)
 }
 
@@ -509,12 +509,26 @@ func (s *DeclarativeResourceTestSuite) TestGetAllResourceIDsFiltersUnregisteredV
 	}, (*tidcommon.ServiceError)(nil))
 	s.mockNotif.On("ListSenders", mock.Anything).Return([]ncommon.NotificationSenderDTO{
 		{ID: "s1", Type: ncommon.NotificationSenderTypeMessage, Provider: ncommon.NotificationProviderTypeTwilio},
+		// unregistered -> excluded
 		{ID: "s2", Type: ncommon.NotificationSenderTypeEmail, Provider: ncommon.NotificationProviderType("mailer")},
 	}, (*tidcommon.ServiceError)(nil))
 
 	ids, svcErr := s.exporter.GetAllResourceIDs(context.Background())
 	s.Require().Nil(svcErr)
 	s.ElementsMatch([]string{"1", "s1"}, ids)
+}
+
+func (s *DeclarativeResourceTestSuite) TestGetAllResourceIDsIncludesEmailSenders() {
+	s.mockIDP.On("GetIdentityProviderList", mock.Anything).Return([]idp.BasicIDPDTO{}, (*tidcommon.ServiceError)(nil))
+	s.mockNotif.On("ListSenders", mock.Anything).Return([]ncommon.NotificationSenderDTO{
+		{ID: "smtp-1", Type: ncommon.NotificationSenderTypeEmail, Provider: ncommon.NotificationProviderTypeSMTP},
+		{ID: "http-1", Type: ncommon.NotificationSenderTypeEmail, Provider: ncommon.NotificationProviderTypeHTTP},
+		{ID: "sms-1", Type: ncommon.NotificationSenderTypeMessage, Provider: ncommon.NotificationProviderTypeTwilio},
+	}, (*tidcommon.ServiceError)(nil))
+
+	ids, svcErr := s.exporter.GetAllResourceIDs(context.Background())
+	s.Require().Nil(svcErr)
+	s.ElementsMatch([]string{"smtp-1", "http-1", "sms-1"}, ids)
 }
 
 func (s *DeclarativeResourceTestSuite) TestValidateResourceRejectsEmptyName() {

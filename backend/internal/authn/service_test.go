@@ -518,8 +518,8 @@ func (suite *AuthenticationServiceTestSuite) TestSendOTPEmailSuccess() {
 	suite.mockTemplateService.On("Render",
 		mock.Anything, template.ScenarioOTP, template.TemplateTypeEmail, mock.Anything).
 		Return(&template.RenderedTemplate{Body: "Your OTP is 123456"}, nil)
-	suite.mockNotifSenderSvc.On("SendMessage",
-		mock.Anything, notifcommon.ChannelTypeEmail, senderID, mock.Anything).
+	suite.mockNotifSenderSvc.On("SendEmail",
+		mock.Anything, senderID, mock.Anything).
 		Return(nil)
 
 	result, err := suite.service.SendOTP(context.Background(), senderID, notifcommon.ChannelTypeEmail, recipient)
@@ -2406,9 +2406,16 @@ func (suite *AuthenticationServiceTestSuite) testSendOTPSendErrorHelper(
 	suite.mockTemplateService.On("Render",
 		mock.Anything, template.ScenarioOTP, templateType, mock.Anything).
 		Return(&template.RenderedTemplate{Body: "Your OTP is 123456"}, nil)
-	suite.mockNotifSenderSvc.On("SendMessage",
-		mock.Anything, channelType, senderID, mock.Anything).
-		Return(svcErr)
+
+	if channelType == notifcommon.ChannelTypeEmail {
+		suite.mockNotifSenderSvc.On("SendEmail",
+			mock.Anything, senderID, mock.Anything).
+			Return(svcErr)
+	} else {
+		suite.mockNotifSenderSvc.On("SendMessage",
+			mock.Anything, channelType, senderID, mock.Anything).
+			Return(svcErr)
+	}
 
 	result, err := suite.service.SendOTP(context.Background(), senderID, channelType, recipient)
 

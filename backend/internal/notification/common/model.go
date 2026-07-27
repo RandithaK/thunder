@@ -19,13 +19,12 @@
 // Package common contains the common models and constants for notification package.
 package common
 
-import "github.com/thunder-id/thunderid/internal/system/cmodels"
+import (
+	"errors"
+	"strings"
 
-// SMSData represents the data structure for a SMS message.
-type SMSData struct {
-	To   string `json:"to"`
-	Body string `json:"body"`
-}
+	"github.com/thunder-id/thunderid/internal/system/cmodels"
+)
 
 // MessageData holds the channel-agnostic payload for sending an SMS or message.
 type MessageData struct {
@@ -53,59 +52,6 @@ type NotificationSenderDTO struct {
 	Properties  []cmodels.Property       `yaml:"properties,omitempty"`
 }
 
-// NotificationSenderRequest represents the request structure for creating or updating a notification sender.
-type NotificationSenderRequest struct {
-	Name        string                `json:"name"`
-	Description string                `json:"description"`
-	Provider    string                `json:"provider"`
-	Properties  []cmodels.PropertyDTO `json:"properties"`
-}
-
-// NotificationSenderResponse represents the response structure for a notification sender.
-type NotificationSenderResponse struct {
-	ID          string                   `json:"id"`
-	Name        string                   `json:"name"`
-	Description string                   `json:"description"`
-	Provider    NotificationProviderType `json:"provider"`
-	Properties  []cmodels.PropertyDTO    `json:"properties"`
-}
-
-// SendOTPRequest represents the request structure for sending an OTP.
-type SendOTPRequest struct {
-	Recipient string `json:"recipient"`
-	SenderID  string `json:"senderId"`
-	Channel   string `json:"channel"`
-}
-
-// SendOTPResponse represents the response structure for OTP send request.
-type SendOTPResponse struct {
-	SessionToken string `json:"sessionToken"`
-	Status       string `json:"status"`
-}
-
-// VerifyOTPRequest represents the request structure for verifying an OTP.
-type VerifyOTPRequest struct {
-	SessionToken string `json:"sessionToken"`
-	OTPCode      string `json:"otpCode"`
-}
-
-// VerifyOTPResponse represents the response structure for OTP verification.
-type VerifyOTPResponse struct {
-	Status string `json:"status"`
-}
-
-// SendOTPDTO represents the service layer data structure for sending an OTP.
-type SendOTPDTO struct {
-	Recipient string
-	SenderID  string
-	Channel   string
-}
-
-// SendOTPResultDTO represents the service layer result for OTP send operation.
-type SendOTPResultDTO struct {
-	SessionToken string
-}
-
 // VerifyOTPDTO represents the service layer data structure for verifying an OTP.
 type VerifyOTPDTO struct {
 	SessionToken string
@@ -119,13 +65,39 @@ type VerifyOTPResultDTO struct {
 	RecipientAttr string
 }
 
-// NotificationSenderRequestWithID represents the request structure for creating a notification sender
-// from file-based config.
-type NotificationSenderRequestWithID struct {
-	ID          string                   `yaml:"id"`
-	Name        string                   `yaml:"name"`
-	Description string                   `yaml:"description,omitempty"`
-	Type        NotificationSenderType   `yaml:"type,omitempty"`
-	Provider    NotificationProviderType `yaml:"provider"`
-	Properties  []cmodels.PropertyDTO    `yaml:"properties,omitempty"`
+// Validate cleans and validates the email data payload.
+func (e *EmailData) Validate() error {
+	trimSlice := func(s []string) []string {
+		if s == nil {
+			return nil
+		}
+		res := make([]string, len(s))
+		for i, v := range s {
+			res[i] = strings.TrimSpace(v)
+		}
+		return res
+	}
+
+	e.Subject = strings.TrimSpace(e.Subject)
+	e.To = trimSlice(e.To)
+	e.CC = trimSlice(e.CC)
+	e.BCC = trimSlice(e.BCC)
+
+	if len(e.To) == 0 || len(e.To[0]) == 0 {
+		return errors.New("recipient address cannot be empty")
+	}
+
+	for _, addressList := range [][]string{e.To, e.CC, e.BCC} {
+		for _, address := range addressList {
+			if strings.ContainsAny(address, CRLF) {
+				return errors.New("recipient address contains invalid characters")
+			}
+		}
+	}
+
+	if strings.ContainsAny(e.Subject, CRLF) {
+		return errors.New("subject contains invalid characters")
+	}
+
+	return nil
 }

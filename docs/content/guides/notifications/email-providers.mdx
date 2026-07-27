@@ -1,7 +1,7 @@
 ---
 title: Configure an Email Provider
 docType: guide
-description: Set up an Email notification sender to deliver emails in {{ProductName}}.
+description: Set up an email provider to deliver emails in {{ProductName}}.
 ---
 
 # Configure an Email Provider
@@ -10,8 +10,8 @@ description: Set up an Email notification sender to deliver emails in {{ProductN
 
 Two types of email providers are supported:
 
-- **SMTP**, which requires a Host, Port, and From Address.
-- **Custom (HTTP)**, which connects to any email gateway through an HTTP webhook.
+- **SMTP**, which connects to a standard SMTP email server.
+- **Custom (HTTP)**, which connects to an email gateway or service via HTTP REST endpoints.
 
 ## Prerequisites
 
@@ -27,7 +27,7 @@ Configure a traditional SMTP server for sending emails.
 Send a `POST` request to the connections API:
 
 ```bash
-curl -X POST https://localhost:8090/connections/smtp \
+curl -X POST https://localhost:8090/connections/smtp-email \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <access_token>" \
   -d '{
@@ -55,19 +55,23 @@ curl -X POST https://localhost:8090/connections/smtp \
 | `username` | ❌ | Username for SMTP authentication. Required when `enableAuthentication` is `true`. |
 | `password` | ❌ | Password for SMTP authentication. Required when `enableAuthentication` is `true`. |
 | `tls` | ❌ | Enables explicit STARTTLS encryption. Defaults to `true`. |
-| `enableAuthentication` | ❌ | Enables SMTP authentication. Defaults to `true`. |
+| `enableAuthentication` | ❌ | Enables SMTP authentication. Defaults to `false`. |
 
 ### Custom HTTP Provider
 
-Use the custom HTTP provider to connect <ProductName /> to any email gateway that accepts HTTP webhook requests.
+Use the custom HTTP provider to connect <ProductName /> to any email gateway or REST API endpoint that accepts HTTP requests.
+
+:::note
+Custom HTTP provider supports static headers (including `Authorization: Bearer <token>`) via custom HTTP headers. Dynamic authentication protocols such as OAuth2 client credentials are not supported.
+:::
 
 ```bash
-curl -X POST https://localhost:8090/connections/http \
+curl -X POST https://localhost:8090/connections/http-email \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <access_token>" \
   -d '{
-    "name": "CustomEmailWebhook",
-    "description": "Custom HTTP webhook for email delivery",
+    "name": "CustomEmailHTTP",
+    "description": "Custom HTTP provider for email delivery",
     "url": "https://email.example.com/send",
     "httpMethod": "POST",
     "contentType": "JSON",
@@ -93,7 +97,7 @@ To update an existing connection, send a `PUT` request with the connection's ID.
 ### Update SMTP Provider
 
 ```bash
-curl -X PUT https://localhost:8090/connections/smtp/<sender-id> \
+curl -X PUT https://localhost:8090/connections/smtp-email/<sender-id> \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <access_token>" \
   -d '{
@@ -112,11 +116,11 @@ curl -X PUT https://localhost:8090/connections/smtp/<sender-id> \
 ### Update Custom HTTP Provider
 
 ```bash
-curl -X PUT https://localhost:8090/connections/http/<sender-id> \
+curl -X PUT https://localhost:8090/connections/http-email/<sender-id> \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <access_token>" \
   -d '{
-    "name": "CustomEmailWebhook",
+    "name": "CustomEmailHTTP",
     "url": "https://email.example.com/send",
     "httpMethod": "POST",
     "contentType": "JSON",
@@ -133,28 +137,28 @@ A connection's type cannot be changed after creation. To switch providers, delet
 **List SMTP providers:**
 
 ```bash
-curl https://localhost:8090/connections/smtp \
+curl https://localhost:8090/connections/smtp-email \
   -H "Authorization: Bearer <access_token>"
 ```
 
 **List HTTP providers:**
 
 ```bash
-curl https://localhost:8090/connections/http \
+curl https://localhost:8090/connections/http-email \
   -H "Authorization: Bearer <access_token>"
 ```
 
 **Delete SMTP provider:**
 
 ```bash
-curl -X DELETE https://localhost:8090/connections/smtp/<sender-id> \
+curl -X DELETE https://localhost:8090/connections/smtp-email/<sender-id> \
   -H "Authorization: Bearer <access_token>"
 ```
 
 **Delete HTTP provider:**
 
 ```bash
-curl -X DELETE https://localhost:8090/connections/http/<sender-id> \
+curl -X DELETE https://localhost:8090/connections/http-email/<sender-id> \
   -H "Authorization: Bearer <access_token>"
 ```
 

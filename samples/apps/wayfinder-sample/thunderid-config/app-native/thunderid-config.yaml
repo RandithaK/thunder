@@ -1874,9 +1874,7 @@ value:
     - "http://localhost:5173"
 ---
 # resource_type: notification_sender
-# Email sender backed by the Wayfinder bundled SMTP server (smtp-server/).
-# The defaults here match the smtp-server/.env.example — no changes required for local development.
-# To use an external SMTP relay, override the values via thunderid.env.
+# Email sender backed for the Wayfinder bundled SMTP server (smtp-server/).
 id: wayfinder-smtp-email-sender
 name: Wayfinder Email Sender
 description: Email sender for the Wayfinder sample, backed by the bundled local SMTP server

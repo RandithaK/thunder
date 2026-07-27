@@ -172,7 +172,7 @@ After the import, complete the following local configuration and restart the ser
     user_onboarding_flow_handle: "wayfinder-onboarding-flow"
   ```
 
-- The sample ships with a built-in local SMTP server (`smtp-server/`) that listens on `127.0.0.1:2525` — no external relay required. You will configure this via the API or Console.
+- The sample ships with a built-in local SMTP server (`smtp-server/`) that listens on `127.0.0.1:2525` — no external relay required.
 
 - Once the sample is running, open `http://localhost:8788` to view captured emails in the inbox UI.
 

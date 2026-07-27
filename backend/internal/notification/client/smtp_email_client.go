@@ -99,13 +99,16 @@ func parseConfig(ctx context.Context, sender common.NotificationSenderDTO, logge
 		case common.SMTPPropKeyFromAddress:
 			config.from = strings.TrimSpace(val)
 		case common.SMTPPropKeyTLS:
-			switch strings.TrimSpace(strings.ToLower(val)) {
+			tlsVal := strings.TrimSpace(strings.ToLower(val))
+			switch tlsVal {
 			case string(common.TLSModeSTARTTLS):
 				config.tlsMode = common.TLSModeSTARTTLS
 			case string(common.TLSModeImplicit):
 				config.tlsMode = common.TLSModeImplicit
-			default:
+			case string(common.TLSModeNone), "false", "":
 				config.tlsMode = common.TLSModeNone
+			default:
+				return config, fmt.Errorf("invalid tls mode: %s", val)
 			}
 		case common.SMTPPropKeyEnableAuth:
 			config.enableAuthentication = strings.TrimSpace(strings.ToLower(val)) == "true"
@@ -202,14 +205,19 @@ func (c *smtpEmailClient) sendViaSMTP(
 	var conn net.Conn
 	var err error
 
+	dialer := &net.Dialer{Timeout: smtpDialTimeout}
 	if c.config.tlsMode == common.TLSModeImplicit {
 		tlsConfig := &tls.Config{
 			ServerName: c.config.host,
 			MinVersion: tls.VersionTLS12,
 		}
-		conn, err = tls.DialWithDialer(&net.Dialer{Timeout: smtpDialTimeout}, "tcp", serverAddress, tlsConfig)
+		tlsDialer := &tls.Dialer{
+			NetDialer: dialer,
+			Config:    tlsConfig,
+		}
+		conn, err = tlsDialer.DialContext(ctx, "tcp", serverAddress)
 	} else {
-		conn, err = net.DialTimeout("tcp", serverAddress, smtpDialTimeout)
+		conn, err = dialer.DialContext(ctx, "tcp", serverAddress)
 	}
 
 	if err != nil {
@@ -226,9 +234,13 @@ func (c *smtpEmailClient) sendViaSMTP(
 	if err != nil {
 		return fmt.Errorf("smtp connection failed: %w", err)
 	}
+
+	var quitSucceeded bool
 	defer func() {
-		if closeErr := client.Close(); closeErr != nil {
-			c.logger.Error(ctx, "Failed to force close SMTP client", log.Error(closeErr))
+		if !quitSucceeded {
+			if closeErr := client.Close(); closeErr != nil {
+				c.logger.Error(ctx, "Failed to force close SMTP client", log.Error(closeErr))
+			}
 		}
 	}()
 
@@ -278,6 +290,8 @@ func (c *smtpEmailClient) sendViaSMTP(
 
 	if err := client.Quit(); err != nil {
 		c.logger.Error(ctx, "Failed to gracefully close SMTP client", log.Error(err))
+	} else {
+		quitSucceeded = true
 	}
 
 	return nil

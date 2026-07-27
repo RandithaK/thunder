@@ -115,12 +115,12 @@ func registerRoutes(mux *http.ServeMux, h *handler) {
 		collectionOpts, itemOpts)
 
 	// Email-backed vendors.
-	registerEmailVendorRoutes(mux, h, "/connections/smtp", ncommon.NotificationProviderTypeSMTP,
+	registerEmailVendorRoutes(mux, h, "/connections/smtp-email", ncommon.NotificationProviderTypeSMTP,
 		createEmailHandler(h, smtpToSenderDTO, smtpFromSenderDTO),
 		getEmailHandler(h, ncommon.NotificationProviderTypeSMTP, smtpFromSenderDTO),
 		updateEmailHandler(h, ncommon.NotificationProviderTypeSMTP, smtpToSenderDTO, smtpFromSenderDTO),
 		collectionOpts, itemOpts)
-	registerEmailVendorRoutes(mux, h, "/connections/http", ncommon.NotificationProviderTypeHTTP,
+	registerEmailVendorRoutes(mux, h, "/connections/http-email", ncommon.NotificationProviderTypeHTTP,
 		createEmailHandler(h, httpEmailToSenderDTO, httpEmailFromSenderDTO),
 		getEmailHandler(h, ncommon.NotificationProviderTypeHTTP, httpEmailFromSenderDTO),
 		updateEmailHandler(h, ncommon.NotificationProviderTypeHTTP, httpEmailToSenderDTO, httpEmailFromSenderDTO),

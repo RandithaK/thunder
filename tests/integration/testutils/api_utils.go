@@ -1582,7 +1582,6 @@ func GetFlowIDByHandle(handle string, flowType string) (string, error) {
 	return "", fmt.Errorf("flow with handle '%s' not found", handle)
 }
 
-
 // senderVendorRegistryMu guards senderVendorRegistry.
 var senderVendorRegistryMu sync.RWMutex
 
@@ -1601,10 +1600,10 @@ func senderVendorPath(provider string) (string, error) {
 		return "vonage", nil
 	case "custom":
 		return "sms-gateway", nil
-	case "smtp":
-		return "smtp", nil
-	case "http":
-		return "http", nil
+	case "smtp", "smtp-email":
+		return "smtp-email", nil
+	case "http", "http-email":
+		return "http-email", nil
 	default:
 		return "", fmt.Errorf("unsupported notification sender provider for /connections: %s", provider)
 	}

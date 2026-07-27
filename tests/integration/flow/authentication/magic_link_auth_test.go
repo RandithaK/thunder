@@ -202,7 +202,7 @@ func (ts *magicLinkAuthFlowTestSuite) SetupSuite() {
 	senderID, err := testutils.CreateNotificationSender(testutils.NotificationSender{
 		Name:        "Email Magic Link Test Sender",
 		Description: "Email notification sender for Magic Link flow testing",
-		Provider:    "smtp",
+		Provider:    "smtp-email",
 		Properties: []testutils.SenderProperty{
 			{Name: "host", Value: "localhost", IsSecret: false},
 			{Name: "port", Value: fmt.Sprintf("%d", ts.mockSMTP.GetPort()), IsSecret: false},

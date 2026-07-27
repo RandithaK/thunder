@@ -97,11 +97,15 @@ func (e *connectionExporter) GetAllResourceIDs(ctx context.Context) ([]string, *
 		return nil, svcErr
 	}
 	for _, sender := range senders {
-		if sender.Type != ncommon.NotificationSenderTypeMessage {
-			continue
-		}
-		if _, ok := smsVendorName(sender.Provider); ok {
-			ids = append(ids, sender.ID)
+		switch sender.Type {
+		case ncommon.NotificationSenderTypeMessage:
+			if _, ok := smsVendorName(sender.Provider); ok {
+				ids = append(ids, sender.ID)
+			}
+		case ncommon.NotificationSenderTypeEmail:
+			if _, ok := emailVendorName(sender.Provider); ok {
+				ids = append(ids, sender.ID)
+			}
 		}
 	}
 
@@ -186,10 +190,10 @@ func (e *connectionExporter) GetResourceRulesForResource(
 		return &declarativeresource.ResourceRules{Variables: []string{"AuthToken"}}
 	case "vonage":
 		return &declarativeresource.ResourceRules{Variables: []string{"APISecret"}}
-	case "smtp":
+	case "smtp-email":
 		return &declarativeresource.ResourceRules{Variables: []string{"Password"}}
 	default:
-		// sms-gateway (and any future no-secret vendor) has nothing to externalize.
+		// sms-gateway, http (and any future no-secret vendor) has nothing to externalize.
 		return &declarativeresource.ResourceRules{}
 	}
 }
@@ -262,13 +266,14 @@ func connectionModelFromIDPDTO(dto providers.IDPDTO) (connectionExportModel, err
 
 // connectionModelFromSenderDTO builds the unified export model from a notification-sender DTO.
 func connectionModelFromSenderDTO(dto ncommon.NotificationSenderDTO) (connectionExportModel, error) {
-	vendor, ok := smsVendorName(dto.Provider)
-	if !ok {
-		vendor, ok = emailVendorName(dto.Provider)
-		if !ok {
-			return connectionExportModel{}, fmt.Errorf(
-				"unsupported message provider for connection export: %s", dto.Provider)
-		}
+	var vendor string
+	if v, ok := smsVendorName(dto.Provider); ok {
+		vendor = v
+	} else if v, ok := emailVendorName(dto.Provider); ok {
+		vendor = v
+	} else {
+		return connectionExportModel{}, fmt.Errorf(
+			"unsupported notification provider for connection export: %s", dto.Provider)
 	}
 	values, err := rawPropertyValues(dto.Properties)
 	if err != nil {
@@ -300,7 +305,7 @@ func connectionModelFromSenderDTO(dto ncommon.NotificationSenderDTO) (connection
 		model.Port = values[ncommon.SMTPPropKeyPort]
 		model.Username = values[ncommon.SMTPPropKeyUsername]
 		model.Password = values[ncommon.SMTPPropKeyPassword]
-		model.SenderAddress = values[ncommon.SMTPPropKeyFromAddress]
+		model.FromAddress = values[ncommon.SMTPPropKeyFromAddress]
 		model.TLS = values[ncommon.SMTPPropKeyTLS]
 		model.EnableAuthentication = values[ncommon.SMTPPropKeyEnableAuth]
 	case ncommon.NotificationProviderTypeHTTP:
@@ -388,10 +393,10 @@ func connectionModelToDTO(model connectionExportModel) (*providers.IDPDTO, *ncom
 		}
 		dto.ID = model.ID
 		return nil, dto, nil
-	case "smtp":
+	case "smtp-email":
 		dto, err := smtpToSenderDTO(smtpConnectionRequest{
 			Name: model.Name, Description: model.Description, Host: model.Host, Port: model.Port,
-			Username: model.Username, Password: model.Password, FromAddress: model.SenderAddress,
+			Username: model.Username, Password: model.Password, FromAddress: model.FromAddress,
 			TLS: model.TLS, EnableAuthentication: model.EnableAuthentication,
 		})
 		if err != nil {
@@ -399,7 +404,7 @@ func connectionModelToDTO(model connectionExportModel) (*providers.IDPDTO, *ncom
 		}
 		dto.ID = model.ID
 		return nil, dto, nil
-	case "http":
+	case "http-email":
 		dto, err := httpEmailToSenderDTO(httpEmailConnectionRequest{
 			Name: model.Name, Description: model.Description, URL: model.URL,
 			HTTPMethod: model.HTTPMethod, HTTPHeaders: model.HTTPHeaders, ContentType: model.ContentType,

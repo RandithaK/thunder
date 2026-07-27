@@ -67,14 +67,12 @@ func (suite *EmailExecutorTestSuite) SetupTest() {
 		mock.Anything,
 	).Return(mockBaseExecutor)
 
-	var err error
-	suite.executor, err = newEmailExecutor(
+	suite.executor = newEmailExecutor(
 		suite.mockFlowFactory,
 		suite.mockNotifSenderSvc,
 		suite.mockTemplateService,
 		suite.mockEntityProvider,
 	)
-	suite.NoError(err)
 }
 
 func (suite *EmailExecutorTestSuite) TestExecute_SendMode_UserInviteTemplate_Success() {
@@ -505,7 +503,7 @@ func (suite *EmailExecutorTestSuite) TestExecute_SendMode_NilTemplateService() {
 		mock.Anything,
 	).Return(mockBaseExecutor)
 
-	noServiceExecutor, _ := newEmailExecutor(mockFactory, suite.mockNotifSenderSvc, nil, suite.mockEntityProvider)
+	noServiceExecutor := newEmailExecutor(mockFactory, suite.mockNotifSenderSvc, nil, suite.mockEntityProvider)
 
 	ctx := &providers.NodeContext{
 		ExecutionID:  "test-execution-id",
@@ -684,12 +682,38 @@ func (suite *EmailExecutorTestSuite) TestExecute_SendMode_EmailSendClientError()
 
 func (suite *EmailExecutorTestSuite) TestExecute_SendMode_NilEmailClient_ReturnsFailure() {
 	mockFactory := coremock.NewFlowFactoryInterfaceMock(suite.T())
+	mockBaseExecutor := coremock.NewExecutorInterfaceMock(suite.T())
 
-	noEmailExecutor, err := newEmailExecutor(mockFactory, nil, suite.mockTemplateService, suite.mockEntityProvider)
+	mockFactory.On("CreateExecutor",
+		ExecutorNameEmailExecutor,
+		providers.ExecutorTypeUtility,
+		[]providers.Input{
+			{Identifier: userAttributeEmail, Type: providers.InputTypeEmail, Required: true},
+		},
+		[]providers.Input{},
+		mock.Anything,
+	).Return(mockBaseExecutor)
+
+	noEmailExecutor := newEmailExecutor(mockFactory, nil, suite.mockTemplateService, suite.mockEntityProvider)
+
+	ctx := &providers.NodeContext{
+		ExecutionID:  "test-execution-id",
+		ExecutorMode: ExecutorModeSend,
+		NodeProperties: map[string]interface{}{
+			propertyKeyEmailTemplate:        "USER_INVITE",
+			propertyKeyNotificationSenderID: "sender-uuid-001",
+		},
+		RuntimeData: map[string]string{
+			common.RuntimeKeyInviteLink: "https://example.com/invite",
+			userAttributeEmail:          "user@example.com",
+		},
+	}
+
+	resp, err := noEmailExecutor.Execute(ctx)
 
 	suite.Error(err)
-	suite.Contains(err.Error(), "notification sender service is not configured")
-	suite.Nil(noEmailExecutor)
+	suite.Nil(resp)
+	suite.EqualError(err, "notification sender service is not configured")
 }
 
 func (suite *EmailExecutorTestSuite) TestExecute_SendMode_CustomEmailIdentifier() {
@@ -1100,7 +1124,7 @@ func (suite *EmailExecutorTestSuite) TestExecute_SendMode_NilEntityProvider_Retu
 		mock.Anything,
 	).Return(mockBaseExecutor)
 
-	noProviderExecutor, _ := newEmailExecutor(mockFactory, suite.mockNotifSenderSvc, suite.mockTemplateService, nil)
+	noProviderExecutor := newEmailExecutor(mockFactory, suite.mockNotifSenderSvc, suite.mockTemplateService, nil)
 
 	ctx := &providers.NodeContext{
 		ExecutionID:  "test-execution-id",
@@ -1250,9 +1274,51 @@ func (suite *EmailExecutorTestSuite) TestExecute_SendMode_MissingSenderId() {
 		},
 	}
 
+	suite.mockTemplateService.On("Render", mock.Anything, template.ScenarioType("USER_INVITE"),
+		template.TemplateTypeEmail, mock.Anything).
+		Return(&template.RenderedTemplate{Subject: "Invite", Body: "Welcome"}, nil)
+	suite.mockNotifSenderSvc.On("SendEmail", mock.Anything, "", mock.Anything).
+		Return(nil)
+
+	resp, err := suite.executor.Execute(ctx)
+
+	suite.NoError(err)
+	suite.NotNil(resp)
+	suite.Equal(providers.ExecComplete, resp.Status)
+}
+
+func (suite *EmailExecutorTestSuite) TestExecute_SendMode_InvalidSenderIDType() {
+	ctx := &providers.NodeContext{
+		ExecutionID:  "test-execution-id",
+		ExecutorMode: ExecutorModeSend,
+		UserInputs:   map[string]string{"email": "user@example.com"},
+		NodeProperties: map[string]interface{}{
+			"emailTemplate": "USER_INVITE",
+			"senderId":      12345,
+		},
+	}
+
 	resp, err := suite.executor.Execute(ctx)
 
 	suite.Error(err)
-	suite.Contains(err.Error(), "senderId is not configured in node properties")
+	suite.Contains(err.Error(), "invalid value for senderId")
+	suite.Nil(resp)
+}
+
+func (suite *EmailExecutorTestSuite) TestExecute_SendMode_BlankSenderID() {
+	ctx := &providers.NodeContext{
+		ExecutionID:  "test-execution-id",
+		ExecutorMode: ExecutorModeSend,
+		UserInputs:   map[string]string{"email": "user@example.com"},
+		NodeProperties: map[string]interface{}{
+			"emailTemplate": "USER_INVITE",
+			"senderId":      "",
+		},
+	}
+
+	resp, err := suite.executor.Execute(ctx)
+
+	suite.Error(err)
+	suite.Contains(err.Error(), "invalid value for senderId")
 	suite.Nil(resp)
 }

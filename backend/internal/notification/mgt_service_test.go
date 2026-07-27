@@ -266,9 +266,7 @@ func (suite *NotificationSenderMgtServiceTestSuite) TestListSenders() {
 }
 
 func (suite *NotificationSenderMgtServiceTestSuite) TestListSenders_EmptyList() {
-	suite.mockStore.EXPECT().
-		listSenders(mock.Anything).
-		Return([]common.NotificationSenderDTO{}, nil).Once()
+	suite.mockStore.EXPECT().listSenders(mock.Anything).Return([]common.NotificationSenderDTO{}, nil).Once()
 
 	result, err := suite.service.ListSenders(context.Background())
 	suite.Nil(err)
@@ -277,9 +275,7 @@ func (suite *NotificationSenderMgtServiceTestSuite) TestListSenders_EmptyList() 
 }
 
 func (suite *NotificationSenderMgtServiceTestSuite) TestListSenders_StoreError() {
-	suite.mockStore.EXPECT().
-		listSenders(mock.Anything).
-		Return(nil, errors.New("database error")).Once()
+	suite.mockStore.EXPECT().listSenders(mock.Anything).Return(nil, errors.New("database error")).Once()
 
 	result, err := suite.service.ListSenders(context.Background())
 	suite.Nil(result)

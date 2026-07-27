@@ -1057,5 +1057,3 @@ func isNotFoundServiceError(svcErr *tidcommon.ServiceError) bool {
 	_, ok := notFoundErrorCodes[svcErr.Code]
 	return ok
 }
-
-// importNotificationSender imports a notification sender resource from a YAML document.

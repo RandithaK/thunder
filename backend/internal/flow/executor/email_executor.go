@@ -48,10 +48,7 @@ func newEmailExecutor(
 	notifSenderSvc notification.NotificationSenderServiceInterface,
 	templateService template.TemplateServiceInterface,
 	entityProvider entityprovider.EntityProviderInterface,
-) (*emailExecutor, error) {
-	if notifSenderSvc == nil {
-		return nil, errors.New("notification sender service is not configured")
-	}
+) *emailExecutor {
 	logger := log.GetLogger().With(log.String(log.LoggerKeyComponentName, "EmailExecutor"))
 	base := flowFactory.CreateExecutor(
 		ExecutorNameEmailExecutor,
@@ -74,7 +71,7 @@ func newEmailExecutor(
 		notifSenderSvc:  notifSenderSvc,
 		templateService: templateService,
 		entityProvider:  entityProvider,
-	}, nil
+	}
 }
 
 // Execute sends an email using the data from the runtime context.
@@ -104,6 +101,10 @@ func (e *emailExecutor) executeSend(ctx *providers.NodeContext) (*providers.Exec
 		return execResp, nil
 	}
 
+	if e.notifSenderSvc == nil {
+		return nil, errors.New("notification sender service is not configured")
+	}
+
 	if e.templateService == nil {
 		return nil, errors.New("template service is not configured")
 	}
@@ -119,9 +120,13 @@ func (e *emailExecutor) executeSend(ctx *providers.NodeContext) (*providers.Exec
 		return execResp, nil
 	}
 
-	senderID, err := resolveStringNodeProperty(ctx, propertyKeyNotificationSenderID)
-	if err != nil {
-		return nil, fmt.Errorf("senderId is not configured in node properties: %w", err)
+	var senderID string
+	if rawSenderID, ok := ctx.NodeProperties[propertyKeyNotificationSenderID]; ok {
+		senderIDStr, ok := rawSenderID.(string)
+		if !ok || senderIDStr == "" {
+			return nil, fmt.Errorf("invalid value for %s: expected a non-empty string", propertyKeyNotificationSenderID)
+		}
+		senderID = senderIDStr
 	}
 
 	var scenario template.ScenarioType

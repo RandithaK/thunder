@@ -28,21 +28,13 @@ import (
 	"github.com/thunder-id/thunderid/internal/system/log"
 )
 
-// httpWebhookConfig holds the configuration for HTTP webhook clients.
-type httpWebhookConfig struct {
-	url         string
-	httpMethod  string
-	httpHeaders map[string]string
-	contentType string
-}
-
-// parseHTTPWebhookConfig parses the HTTP webhook configuration from the given notification sender properties.
-func parseHTTPWebhookConfig(
+// parseHTTPTransportConfig parses the HTTP transport configuration from the given notification sender properties.
+func parseHTTPTransportConfig(
 	ctx context.Context,
 	sender common.NotificationSenderDTO,
 	logger *log.Logger,
-) (httpWebhookConfig, error) {
-	config := httpWebhookConfig{}
+) (httpTransportConfig, error) {
+	config := httpTransportConfig{}
 
 	for _, prop := range sender.Properties {
 		value, err := prop.GetValue()
@@ -66,7 +58,7 @@ func parseHTTPWebhookConfig(
 		case common.SenderPropertySupportedChannels:
 			// Ignored here as it is a generic sender property
 		default:
-			logger.Warn(ctx, "Unknown property for HTTP webhook client", log.String("property", prop.GetName()))
+			logger.Warn(ctx, "Unknown property for HTTP transport client", log.String("property", prop.GetName()))
 		}
 	}
 

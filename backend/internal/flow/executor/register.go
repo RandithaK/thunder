@@ -224,12 +224,8 @@ func newBuiltInExecutorRegistrars() map[string]builtInExecutorRegistrar {
 			reg.RegisterExecutor(ExecutorNameInviteExecutor, newInviteExecutor(deps.FlowFactory))
 		},
 		ExecutorNameEmailExecutor: func(reg ExecutorRegistryInterface, deps ExecutorDependencies) {
-			executor, err := newEmailExecutor(
-				deps.FlowFactory, deps.NotifSenderSvc, deps.TemplateService, deps.EntityProvider)
-			if err != nil {
-				log.GetLogger().Fatal(context.Background(), "Failed to create email executor", log.Error(err))
-			}
-			reg.RegisterExecutor(ExecutorNameEmailExecutor, executor)
+			reg.RegisterExecutor(ExecutorNameEmailExecutor, newEmailExecutor(
+				deps.FlowFactory, deps.NotifSenderSvc, deps.TemplateService, deps.EntityProvider))
 		},
 		ExecutorNameCredentialSetter: func(reg ExecutorRegistryInterface, deps ExecutorDependencies) {
 			reg.RegisterExecutor(ExecutorNameCredentialSetter, newCredentialSetter(

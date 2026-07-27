@@ -26,10 +26,10 @@ const (
 	NotificationSenderTypeMessage NotificationSenderType = "MESSAGE"
 	// NotificationSenderTypeEmail represents an email notification sender.
 	NotificationSenderTypeEmail NotificationSenderType = "EMAIL"
-
-	// CRLF is theStandard line ending used in network protocols (e.g., SMTP, HTTP).
-	CRLF = "\r\n"
 )
+
+// CRLF is the standard line ending used in network protocols (e.g., SMTP, HTTP).
+const CRLF = "\r\n"
 
 // NotificationProviderType defines the type of messaging provider.
 type NotificationProviderType string
@@ -43,9 +43,9 @@ const (
 	NotificationProviderTypeCustom NotificationProviderType = "custom"
 
 	// NotificationProviderTypeSMTP represents the SMTP email provider.
-	NotificationProviderTypeSMTP NotificationProviderType = "smtp"
-	// NotificationProviderTypeHTTP represents an HTTP webhook email provider.
-	NotificationProviderTypeHTTP NotificationProviderType = "http"
+	NotificationProviderTypeSMTP NotificationProviderType = "smtp-email"
+	// NotificationProviderTypeHTTP represents an HTTP email provider.
+	NotificationProviderTypeHTTP NotificationProviderType = "http-email"
 )
 
 // ChannelType defines the type of communication channel.

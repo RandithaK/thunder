@@ -22,8 +22,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/thunder-id/thunderid/internal/notification/common"
 	"github.com/thunder-id/thunderid/internal/system/cmodels"
@@ -31,35 +30,43 @@ import (
 	"github.com/thunder-id/thunderid/internal/system/log"
 )
 
-func TestParseHTTPHeaders_Valid(t *testing.T) {
+type UtilsTestSuite struct {
+	suite.Suite
+}
+
+func TestUtilsTestSuite(t *testing.T) {
+	suite.Run(t, new(UtilsTestSuite))
+}
+
+func (s *UtilsTestSuite) TestParseHTTPHeaders_Valid() {
 	headersString := "Authorization: Bearer token, X-Custom-Header: custom_value"
 	headers, err := parseHTTPHeaders(headersString)
 
-	require.NoError(t, err)
-	require.NotNil(t, headers)
-	assert.Equal(t, "Bearer token", headers["Authorization"])
-	assert.Equal(t, "custom_value", headers["X-Custom-Header"])
+	s.NoError(err)
+	s.NotNil(headers)
+	s.Equal("Bearer token", headers["Authorization"])
+	s.Equal("custom_value", headers["X-Custom-Header"])
 }
 
-func TestParseHTTPHeaders_EmptyString(t *testing.T) {
+func (s *UtilsTestSuite) TestParseHTTPHeaders_EmptyString() {
 	headersString := "   "
 	headers, err := parseHTTPHeaders(headersString)
 
-	require.NoError(t, err)
-	require.NotNil(t, headers)
-	assert.Empty(t, headers)
+	s.NoError(err)
+	s.NotNil(headers)
+	s.Empty(headers)
 }
 
-func TestParseHTTPHeaders_Invalid(t *testing.T) {
+func (s *UtilsTestSuite) TestParseHTTPHeaders_Invalid() {
 	headersString := "Invalid Header Format"
 	headers, err := parseHTTPHeaders(headersString)
 
-	require.Error(t, err)
-	require.Nil(t, headers)
-	assert.Contains(t, err.Error(), "invalid HTTP header format")
+	s.Error(err)
+	s.Nil(headers)
+	s.Contains(err.Error(), "invalid HTTP header format")
 }
 
-func TestParseHTTPWebhookConfig_Success(t *testing.T) {
+func (s *UtilsTestSuite) TestParseHTTPTransportConfig_Success() {
 	props := []cmodels.Property{
 		createProperty(common.CustomPropKeyURL, "https://example.com/webhook", false),
 		createProperty(common.CustomPropKeyHTTPMethod, "post", false),
@@ -70,16 +77,16 @@ func TestParseHTTPWebhookConfig_Success(t *testing.T) {
 	sender := common.NotificationSenderDTO{Properties: props}
 	logger := log.GetLogger()
 
-	cfg, err := parseHTTPWebhookConfig(context.Background(), sender, logger)
+	cfg, err := parseHTTPTransportConfig(context.Background(), sender, logger)
 
-	require.NoError(t, err)
-	assert.Equal(t, "https://example.com/webhook", cfg.url)
-	assert.Equal(t, "POST", cfg.httpMethod)
-	assert.Equal(t, "APPLICATION/JSON", cfg.contentType)
-	assert.Equal(t, map[string]string{"Authorization": "Bearer token"}, cfg.httpHeaders)
+	s.NoError(err)
+	s.Equal("https://example.com/webhook", cfg.url)
+	s.Equal("POST", cfg.httpMethod)
+	s.Equal("APPLICATION/JSON", cfg.contentType)
+	s.Equal(map[string]string{"Authorization": "Bearer token"}, cfg.httpHeaders)
 }
 
-func TestParseHTTPWebhookConfig_MissingURL(t *testing.T) {
+func (s *UtilsTestSuite) TestParseHTTPTransportConfig_MissingURL() {
 	props := []cmodels.Property{
 		createProperty(common.CustomPropKeyHTTPMethod, "post", false),
 	}
@@ -87,13 +94,13 @@ func TestParseHTTPWebhookConfig_MissingURL(t *testing.T) {
 	sender := common.NotificationSenderDTO{Properties: props}
 	logger := log.GetLogger()
 
-	_, err := parseHTTPWebhookConfig(context.Background(), sender, logger)
+	_, err := parseHTTPTransportConfig(context.Background(), sender, logger)
 
-	require.Error(t, err)
-	assert.Equal(t, "custom provider must have a URL property", err.Error())
+	s.Error(err)
+	s.Equal("custom provider must have a URL property", err.Error())
 }
 
-func TestParseHTTPWebhookConfig_InvalidHeaders(t *testing.T) {
+func (s *UtilsTestSuite) TestParseHTTPTransportConfig_InvalidHeaders() {
 	props := []cmodels.Property{
 		createProperty(common.CustomPropKeyURL, "https://example.com/webhook", false),
 		createProperty(common.CustomPropKeyHTTPHeaders, "InvalidHeaderFormat", false),
@@ -102,13 +109,13 @@ func TestParseHTTPWebhookConfig_InvalidHeaders(t *testing.T) {
 	sender := common.NotificationSenderDTO{Properties: props}
 	logger := log.GetLogger()
 
-	_, err := parseHTTPWebhookConfig(context.Background(), sender, logger)
+	_, err := parseHTTPTransportConfig(context.Background(), sender, logger)
 
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to parse HTTP headers: invalid HTTP header format")
+	s.Error(err)
+	s.Contains(err.Error(), "failed to parse HTTP headers: invalid HTTP header format")
 }
 
-func TestParseHTTPWebhookConfig_UnknownProperty(t *testing.T) {
+func (s *UtilsTestSuite) TestParseHTTPTransportConfig_UnknownProperty() {
 	props := []cmodels.Property{
 		createProperty(common.CustomPropKeyURL, "https://example.com/webhook", false),
 		createProperty("unknown_prop", "some_value", false),
@@ -118,8 +125,8 @@ func TestParseHTTPWebhookConfig_UnknownProperty(t *testing.T) {
 	_ = config.InitializeServerRuntime("", &config.Config{})
 	logger := log.GetLogger()
 
-	cfg, err := parseHTTPWebhookConfig(context.Background(), sender, logger)
+	cfg, err := parseHTTPTransportConfig(context.Background(), sender, logger)
 
-	require.NoError(t, err)
-	assert.Equal(t, "https://example.com/webhook", cfg.url)
+	s.NoError(err)
+	s.Equal("https://example.com/webhook", cfg.url)
 }

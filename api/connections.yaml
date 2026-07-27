@@ -613,7 +613,7 @@ paths:
         "500": { $ref: '#/components/responses/InternalServerError' }
 
 
-  /connections/smtp:
+  /connections/smtp-email:
     get:
       tags: [Connections]
       summary: List configured SMTP connections
@@ -641,7 +641,7 @@ paths:
         "401": { $ref: '#/components/responses/Unauthorized' }
         "403": { $ref: '#/components/responses/Forbidden' }
         "500": { $ref: '#/components/responses/InternalServerError' }
-  /connections/smtp/{id}:
+  /connections/smtp-email/{id}:
     parameters:
       - { $ref: '#/components/parameters/ConnectionID' }
     get:
@@ -683,13 +683,11 @@ paths:
       summary: Delete an SMTP connection
       responses:
         "204": { description: Connection deleted }
-        "404": { $ref: '#/components/responses/NotFound' }
-        "409": { $ref: '#/components/responses/Conflict' }
         "401": { $ref: '#/components/responses/Unauthorized' }
         "403": { $ref: '#/components/responses/Forbidden' }
         "500": { $ref: '#/components/responses/InternalServerError' }
 
-  /connections/http:
+  /connections/http-email:
     get:
       tags: [Connections]
       summary: List configured HTTP email connections
@@ -717,7 +715,7 @@ paths:
         "401": { $ref: '#/components/responses/Unauthorized' }
         "403": { $ref: '#/components/responses/Forbidden' }
         "500": { $ref: '#/components/responses/InternalServerError' }
-  /connections/http/{id}:
+  /connections/http-email/{id}:
     parameters:
       - { $ref: '#/components/parameters/ConnectionID' }
     get:
@@ -758,8 +756,6 @@ paths:
       summary: Delete an HTTP email connection
       responses:
         "204": { description: Connection deleted }
-        "404": { $ref: '#/components/responses/NotFound' }
-        "409": { $ref: '#/components/responses/Conflict' }
         "401": { $ref: '#/components/responses/Unauthorized' }
         "403": { $ref: '#/components/responses/Forbidden' }
         "500": { $ref: '#/components/responses/InternalServerError' }
@@ -1430,7 +1426,6 @@ components:
         key: { type: string }
         defaultValue: { type: string }
 
-
     ConnectionID:
       type: string
       format: uuid
@@ -1481,11 +1476,11 @@ components:
         id: { $ref: '#/components/schemas/ConnectionID' }
         name: { $ref: '#/components/schemas/ConnectionName' }
         description: { $ref: '#/components/schemas/ConnectionDescription' }
-        type: { type: string, example: "smtp" }
+        type: { type: string, example: "smtp-email" }
         host: { type: string, example: "smtp.example.com" }
         port: { type: string, example: "587" }
         username: { type: string, example: "user" }
-        password: { type: string, example: "secret" }
+        password: { type: string, example: "******" }
         fromAddress: { type: string, example: "no-reply@example.com" }
         tls: { type: string, example: "true" }
         enableAuthentication: { type: string, example: "true" }
@@ -1519,7 +1514,7 @@ components:
         id: { $ref: '#/components/schemas/ConnectionID' }
         name: { $ref: '#/components/schemas/ConnectionName' }
         description: { $ref: '#/components/schemas/ConnectionDescription' }
-        type: { type: string, example: "http" }
+        type: { type: string, example: "http-email" }
         url: { type: string, example: "https://api.example.com/send" }
         httpMethod: { type: string, example: "POST" }
         httpHeaders: { type: string, example: "Authorization: Bearer token" }

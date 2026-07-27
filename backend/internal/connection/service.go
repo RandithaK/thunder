@@ -275,22 +275,6 @@ func (s *service) listSMSByProvider(ctx context.Context, provider ncommon.Notifi
 	return instances, nil
 }
 
-// smsProviderCounts returns the number of configured message senders per provider.
-func (s *service) smsProviderCounts(ctx context.Context) (map[ncommon.NotificationProviderType]int,
-	*tidcommon.ServiceError) {
-	all, svcErr := s.notificationService.ListSendersByType(ctx, ncommon.NotificationSenderTypeMessage)
-	if svcErr != nil {
-		return nil, svcErr
-	}
-	counts := make(map[ncommon.NotificationProviderType]int)
-	for _, instance := range all {
-		if instance.Type == ncommon.NotificationSenderTypeMessage {
-			counts[instance.Provider]++
-		}
-	}
-	return counts, nil
-}
-
 // getSMSByProvider fetches a single message sender and verifies it is of the expected provider,
 // returning a not-found error on a mismatch so a vendor endpoint cannot read another provider.
 func (s *service) getSMSByProvider(ctx context.Context, provider ncommon.NotificationProviderType, id string) (

@@ -49,35 +49,12 @@ type HandlerTestSuite struct {
 	mockIDP   *idpmock.IDPServiceInterfaceMock
 	mockNotif *notificationmock.NotificationSenderMgtSvcInterfaceMock
 }
-
-type smsStubReq struct {
+type handlerStubReq struct {
 	Name string `json:"name"`
 }
 
-type smsStubResp struct {
+type handlerStubResp struct {
 	ID string `json:"id"`
-}
-
-type SMSHandlerTestSuite struct {
-	suite.Suite
-	handler   *handler
-	mockIDP   *idpmock.IDPServiceInterfaceMock
-	mockNotif *notificationmock.NotificationSenderMgtSvcInterfaceMock
-}
-
-type emailStubReq struct {
-	Name string `json:"name"`
-}
-
-type emailStubResp struct {
-	ID string `json:"id"`
-}
-
-type EmailHandlerTestSuite struct {
-	suite.Suite
-	handler   *handler
-	mockIDP   *idpmock.IDPServiceInterfaceMock
-	mockNotif *notificationmock.NotificationSenderMgtSvcInterfaceMock
 }
 
 func TestHandlerSuite(t *testing.T) {
@@ -430,83 +407,72 @@ const stubProvider = ncommon.NotificationProviderTypeTwilio
 
 var errStubMapper = errors.New("stub mapper failure")
 
-func stubToDTO(smsStubReq) (*ncommon.NotificationSenderDTO, error) {
+func stubToDTO(handlerStubReq) (*ncommon.NotificationSenderDTO, error) {
 	return &ncommon.NotificationSenderDTO{
 		Type:     ncommon.NotificationSenderTypeMessage,
 		Provider: stubProvider,
 	}, nil
 }
 
-func stubToDTOErr(smsStubReq) (*ncommon.NotificationSenderDTO, error) {
+func stubToDTOErr(handlerStubReq) (*ncommon.NotificationSenderDTO, error) {
 	return nil, errStubMapper
 }
 
-func stubFromDTO(dto ncommon.NotificationSenderDTO) (smsStubResp, error) {
-	return smsStubResp{ID: dto.ID}, nil
+func stubFromDTO(dto ncommon.NotificationSenderDTO) (handlerStubResp, error) {
+	return handlerStubResp{ID: dto.ID}, nil
 }
 
-func stubFromDTOErr(ncommon.NotificationSenderDTO) (smsStubResp, error) {
-	return smsStubResp{}, errStubMapper
+func stubFromDTOErr(ncommon.NotificationSenderDTO) (handlerStubResp, error) {
+	return handlerStubResp{}, errStubMapper
 }
 
-// SMSHandlerTestSuite covers the generic SMS connection handlers' branches (decode, mapper and
-// service errors, empty-id guards, list/delete) independently of any specific vendor's mappers.
-
-func TestSMSHandlerSuite(t *testing.T) {
-	suite.Run(t, new(SMSHandlerTestSuite))
-}
-
-func (s *SMSHandlerTestSuite) SetupTest() {
-	s.handler, s.mockIDP, s.mockNotif = newConnectionTestHandler(s.T())
-}
-
-func (s *SMSHandlerTestSuite) stubBody() []byte {
-	body, _ := json.Marshal(smsStubReq{Name: "x"})
+func (s *HandlerTestSuite) smsStubBody() []byte {
+	body, _ := json.Marshal(handlerStubReq{Name: "x"})
 	return body
 }
 
-func (s *SMSHandlerTestSuite) TestCreateInvalidBody() {
+func (s *HandlerTestSuite) TestSMSCreateInvalidBody() {
 	req := httptest.NewRequest(http.MethodPost, "/connections/twilio", bytes.NewReader([]byte("{bad")))
 	rr := httptest.NewRecorder()
 	createSMSConnection(s.handler, rr, req, stubToDTO, stubFromDTO)
 	s.Equal(http.StatusBadRequest, rr.Code)
 }
 
-func (s *SMSHandlerTestSuite) TestCreateToDTOError() {
-	req := httptest.NewRequest(http.MethodPost, "/connections/twilio", bytes.NewReader(s.stubBody()))
+func (s *HandlerTestSuite) TestSMSCreateToDTOError() {
+	req := httptest.NewRequest(http.MethodPost, "/connections/twilio", bytes.NewReader(s.smsStubBody()))
 	rr := httptest.NewRecorder()
 	createSMSConnection(s.handler, rr, req, stubToDTOErr, stubFromDTO)
 	s.Equal(http.StatusInternalServerError, rr.Code)
 }
 
-func (s *SMSHandlerTestSuite) TestCreateServiceError() {
+func (s *HandlerTestSuite) TestSMSCreateServiceError() {
 	s.mockNotif.On("CreateSender", mock.Anything, mock.Anything).
 		Return((*ncommon.NotificationSenderDTO)(nil), &tidcommon.InternalServerError)
 
-	req := httptest.NewRequest(http.MethodPost, "/connections/twilio", bytes.NewReader(s.stubBody()))
+	req := httptest.NewRequest(http.MethodPost, "/connections/twilio", bytes.NewReader(s.smsStubBody()))
 	rr := httptest.NewRecorder()
 	createSMSConnection(s.handler, rr, req, stubToDTO, stubFromDTO)
 	s.Equal(http.StatusInternalServerError, rr.Code)
 }
 
-func (s *SMSHandlerTestSuite) TestCreateFromDTOError() {
+func (s *HandlerTestSuite) TestSMSCreateFromDTOError() {
 	s.mockNotif.On("CreateSender", mock.Anything, mock.Anything).
 		Return(&ncommon.NotificationSenderDTO{ID: "tw-1"}, (*tidcommon.ServiceError)(nil))
 
-	req := httptest.NewRequest(http.MethodPost, "/connections/twilio", bytes.NewReader(s.stubBody()))
+	req := httptest.NewRequest(http.MethodPost, "/connections/twilio", bytes.NewReader(s.smsStubBody()))
 	rr := httptest.NewRecorder()
 	createSMSConnection(s.handler, rr, req, stubToDTO, stubFromDTOErr)
 	s.Equal(http.StatusInternalServerError, rr.Code)
 }
 
-func (s *SMSHandlerTestSuite) TestGetEmptyID() {
+func (s *HandlerTestSuite) TestSMSGetEmptyID() {
 	req := httptest.NewRequest(http.MethodGet, "/connections/twilio/", nil)
 	rr := httptest.NewRecorder()
 	getSMSConnection(s.handler, rr, req, stubProvider, stubFromDTO)
 	s.Equal(http.StatusBadRequest, rr.Code)
 }
 
-func (s *SMSHandlerTestSuite) TestGetServiceError() {
+func (s *HandlerTestSuite) TestSMSGetServiceError() {
 	s.mockNotif.On("GetSender", mock.Anything, "missing").
 		Return((*ncommon.NotificationSenderDTO)(nil), &notification.ErrorSenderNotFound)
 
@@ -517,7 +483,7 @@ func (s *SMSHandlerTestSuite) TestGetServiceError() {
 	s.Equal(http.StatusNotFound, rr.Code)
 }
 
-func (s *SMSHandlerTestSuite) TestGetFromDTOError() {
+func (s *HandlerTestSuite) TestSMSGetFromDTOError() {
 	s.mockNotif.On("GetSender", mock.Anything, "tw-1").Return(&ncommon.NotificationSenderDTO{
 		ID: "tw-1", Type: ncommon.NotificationSenderTypeMessage, Provider: stubProvider,
 	}, (*tidcommon.ServiceError)(nil))
@@ -529,14 +495,14 @@ func (s *SMSHandlerTestSuite) TestGetFromDTOError() {
 	s.Equal(http.StatusInternalServerError, rr.Code)
 }
 
-func (s *SMSHandlerTestSuite) TestUpdateEmptyID() {
-	req := httptest.NewRequest(http.MethodPut, "/connections/twilio/", bytes.NewReader(s.stubBody()))
+func (s *HandlerTestSuite) TestSMSUpdateEmptyID() {
+	req := httptest.NewRequest(http.MethodPut, "/connections/twilio/", bytes.NewReader(s.smsStubBody()))
 	rr := httptest.NewRecorder()
 	updateSMSConnection(s.handler, rr, req, stubProvider, stubToDTO, stubFromDTO)
 	s.Equal(http.StatusBadRequest, rr.Code)
 }
 
-func (s *SMSHandlerTestSuite) TestUpdateInvalidBody() {
+func (s *HandlerTestSuite) TestSMSUpdateInvalidBody() {
 	req := httptest.NewRequest(http.MethodPut, "/connections/twilio/tw-1", bytes.NewReader([]byte("{bad")))
 	req.SetPathValue("id", "tw-1")
 	rr := httptest.NewRecorder()
@@ -544,43 +510,43 @@ func (s *SMSHandlerTestSuite) TestUpdateInvalidBody() {
 	s.Equal(http.StatusBadRequest, rr.Code)
 }
 
-func (s *SMSHandlerTestSuite) TestUpdateToDTOError() {
-	req := httptest.NewRequest(http.MethodPut, "/connections/twilio/tw-1", bytes.NewReader(s.stubBody()))
+func (s *HandlerTestSuite) TestSMSUpdateToDTOError() {
+	req := httptest.NewRequest(http.MethodPut, "/connections/twilio/tw-1", bytes.NewReader(s.smsStubBody()))
 	req.SetPathValue("id", "tw-1")
 	rr := httptest.NewRecorder()
 	updateSMSConnection(s.handler, rr, req, stubProvider, stubToDTOErr, stubFromDTO)
 	s.Equal(http.StatusInternalServerError, rr.Code)
 }
 
-func (s *SMSHandlerTestSuite) TestUpdateServiceError() {
+func (s *HandlerTestSuite) TestSMSUpdateServiceError() {
 	s.mockNotif.On("GetSender", mock.Anything, "tw-1").Return(&ncommon.NotificationSenderDTO{
 		ID: "tw-1", Type: ncommon.NotificationSenderTypeMessage, Provider: stubProvider,
 	}, (*tidcommon.ServiceError)(nil))
 	s.mockNotif.On("UpdateSender", mock.Anything, "tw-1", mock.Anything).
 		Return((*ncommon.NotificationSenderDTO)(nil), &tidcommon.InternalServerError)
 
-	req := httptest.NewRequest(http.MethodPut, "/connections/twilio/tw-1", bytes.NewReader(s.stubBody()))
+	req := httptest.NewRequest(http.MethodPut, "/connections/twilio/tw-1", bytes.NewReader(s.smsStubBody()))
 	req.SetPathValue("id", "tw-1")
 	rr := httptest.NewRecorder()
 	updateSMSConnection(s.handler, rr, req, stubProvider, stubToDTO, stubFromDTO)
 	s.Equal(http.StatusInternalServerError, rr.Code)
 }
 
-func (s *SMSHandlerTestSuite) TestUpdateFromDTOError() {
+func (s *HandlerTestSuite) TestSMSUpdateFromDTOError() {
 	s.mockNotif.On("GetSender", mock.Anything, "tw-1").Return(&ncommon.NotificationSenderDTO{
 		ID: "tw-1", Type: ncommon.NotificationSenderTypeMessage, Provider: stubProvider,
 	}, (*tidcommon.ServiceError)(nil))
 	s.mockNotif.On("UpdateSender", mock.Anything, "tw-1", mock.Anything).
 		Return(&ncommon.NotificationSenderDTO{ID: "tw-1"}, (*tidcommon.ServiceError)(nil))
 
-	req := httptest.NewRequest(http.MethodPut, "/connections/twilio/tw-1", bytes.NewReader(s.stubBody()))
+	req := httptest.NewRequest(http.MethodPut, "/connections/twilio/tw-1", bytes.NewReader(s.smsStubBody()))
 	req.SetPathValue("id", "tw-1")
 	rr := httptest.NewRecorder()
 	updateSMSConnection(s.handler, rr, req, stubProvider, stubToDTO, stubFromDTOErr)
 	s.Equal(http.StatusInternalServerError, rr.Code)
 }
 
-func (s *SMSHandlerTestSuite) TestListInstancesServiceError() {
+func (s *HandlerTestSuite) TestSMSListInstancesServiceError() {
 	s.mockNotif.On("ListSendersByType", mock.Anything, ncommon.NotificationSenderTypeMessage).
 		Return(([]ncommon.NotificationSenderDTO)(nil), &tidcommon.InternalServerError)
 
@@ -590,7 +556,7 @@ func (s *SMSHandlerTestSuite) TestListInstancesServiceError() {
 	s.Equal(http.StatusInternalServerError, rr.Code)
 }
 
-func (s *SMSHandlerTestSuite) TestListInstancesSuccess() {
+func (s *HandlerTestSuite) TestSMSListInstancesSuccess() {
 	testListInstancesSuccessHelper(
 		s.T(),
 		s.mockNotif,
@@ -602,14 +568,14 @@ func (s *SMSHandlerTestSuite) TestListInstancesSuccess() {
 	)
 }
 
-func (s *SMSHandlerTestSuite) TestDeleteEmptyID() {
+func (s *HandlerTestSuite) TestSMSDeleteEmptyID() {
 	req := httptest.NewRequest(http.MethodDelete, "/connections/twilio/", nil)
 	rr := httptest.NewRecorder()
 	s.handler.deleteSMSInstance(stubProvider)(rr, req)
 	s.Equal(http.StatusBadRequest, rr.Code)
 }
 
-func (s *SMSHandlerTestSuite) TestDeleteServiceError() {
+func (s *HandlerTestSuite) TestSMSDeleteServiceError() {
 	s.mockNotif.On("GetSender", mock.Anything, "missing").
 		Return((*ncommon.NotificationSenderDTO)(nil), &notification.ErrorSenderNotFound)
 
@@ -620,7 +586,7 @@ func (s *SMSHandlerTestSuite) TestDeleteServiceError() {
 	s.Equal(http.StatusNotFound, rr.Code)
 }
 
-func (s *SMSHandlerTestSuite) TestDeleteSuccess() {
+func (s *HandlerTestSuite) TestSMSDeleteSuccess() {
 	s.mockNotif.On("GetSender", mock.Anything, "tw-1").Return(&ncommon.NotificationSenderDTO{
 		ID: "tw-1", Type: ncommon.NotificationSenderTypeMessage, Provider: stubProvider,
 	}, (*tidcommon.ServiceError)(nil))
@@ -633,82 +599,72 @@ func (s *SMSHandlerTestSuite) TestDeleteSuccess() {
 	s.Equal(http.StatusNoContent, rr.Code)
 }
 
-func emailStubToDTO(emailStubReq) (*ncommon.NotificationSenderDTO, error) {
+func emailStubToDTO(handlerStubReq) (*ncommon.NotificationSenderDTO, error) {
 	return &ncommon.NotificationSenderDTO{
 		Type:     ncommon.NotificationSenderTypeEmail,
 		Provider: stubProvider,
 	}, nil
 }
 
-func emailStubToDTOErr(emailStubReq) (*ncommon.NotificationSenderDTO, error) {
+func emailStubToDTOErr(handlerStubReq) (*ncommon.NotificationSenderDTO, error) {
 	return nil, errStubMapper
 }
 
-func emailStubFromDTO(dto ncommon.NotificationSenderDTO) (emailStubResp, error) {
-	return emailStubResp{ID: dto.ID}, nil
+func emailStubFromDTO(dto ncommon.NotificationSenderDTO) (handlerStubResp, error) {
+	return handlerStubResp{ID: dto.ID}, nil
 }
 
-func emailStubFromDTOErr(ncommon.NotificationSenderDTO) (emailStubResp, error) {
-	return emailStubResp{}, errStubMapper
+func emailStubFromDTOErr(ncommon.NotificationSenderDTO) (handlerStubResp, error) {
+	return handlerStubResp{}, errStubMapper
 }
 
-// EmailHandlerTestSuite covers the generic Email connection handlers' branches.
-
-func TestEmailHandlerSuite(t *testing.T) {
-	suite.Run(t, new(EmailHandlerTestSuite))
-}
-
-func (s *EmailHandlerTestSuite) SetupTest() {
-	s.handler, s.mockIDP, s.mockNotif = newConnectionTestHandler(s.T())
-}
-
-func (s *EmailHandlerTestSuite) stubBody() []byte {
-	body, _ := json.Marshal(emailStubReq{Name: "x"})
+func (s *HandlerTestSuite) emailStubBody() []byte {
+	body, _ := json.Marshal(handlerStubReq{Name: "x"})
 	return body
 }
 
-func (s *EmailHandlerTestSuite) TestCreateInvalidBody() {
+func (s *HandlerTestSuite) TestEmailCreateInvalidBody() {
 	req := httptest.NewRequest(http.MethodPost, "/connections/email", bytes.NewReader([]byte("{bad")))
 	rr := httptest.NewRecorder()
 	createEmailConnection(s.handler, rr, req, emailStubToDTO, emailStubFromDTO)
 	s.Equal(http.StatusBadRequest, rr.Code)
 }
 
-func (s *EmailHandlerTestSuite) TestCreateToDTOError() {
-	req := httptest.NewRequest(http.MethodPost, "/connections/email", bytes.NewReader(s.stubBody()))
+func (s *HandlerTestSuite) TestEmailCreateToDTOError() {
+	req := httptest.NewRequest(http.MethodPost, "/connections/email", bytes.NewReader(s.emailStubBody()))
 	rr := httptest.NewRecorder()
 	createEmailConnection(s.handler, rr, req, emailStubToDTOErr, emailStubFromDTO)
 	s.Equal(http.StatusInternalServerError, rr.Code)
 }
 
-func (s *EmailHandlerTestSuite) TestCreateServiceError() {
+func (s *HandlerTestSuite) TestEmailCreateServiceError() {
 	s.mockNotif.On("CreateSender", mock.Anything, mock.Anything).
 		Return((*ncommon.NotificationSenderDTO)(nil), &tidcommon.InternalServerError)
 
-	req := httptest.NewRequest(http.MethodPost, "/connections/email", bytes.NewReader(s.stubBody()))
+	req := httptest.NewRequest(http.MethodPost, "/connections/email", bytes.NewReader(s.emailStubBody()))
 	rr := httptest.NewRecorder()
 	createEmailConnection(s.handler, rr, req, emailStubToDTO, emailStubFromDTO)
 	s.Equal(http.StatusInternalServerError, rr.Code)
 }
 
-func (s *EmailHandlerTestSuite) TestCreateFromDTOError() {
+func (s *HandlerTestSuite) TestEmailCreateFromDTOError() {
 	s.mockNotif.On("CreateSender", mock.Anything, mock.Anything).
 		Return(&ncommon.NotificationSenderDTO{ID: "em-1"}, (*tidcommon.ServiceError)(nil))
 
-	req := httptest.NewRequest(http.MethodPost, "/connections/email", bytes.NewReader(s.stubBody()))
+	req := httptest.NewRequest(http.MethodPost, "/connections/email", bytes.NewReader(s.emailStubBody()))
 	rr := httptest.NewRecorder()
 	createEmailConnection(s.handler, rr, req, emailStubToDTO, emailStubFromDTOErr)
 	s.Equal(http.StatusInternalServerError, rr.Code)
 }
 
-func (s *EmailHandlerTestSuite) TestGetEmptyID() {
+func (s *HandlerTestSuite) TestEmailGetEmptyID() {
 	req := httptest.NewRequest(http.MethodGet, "/connections/email/", nil)
 	rr := httptest.NewRecorder()
 	getEmailConnection(s.handler, rr, req, stubProvider, emailStubFromDTO)
 	s.Equal(http.StatusBadRequest, rr.Code)
 }
 
-func (s *EmailHandlerTestSuite) TestGetServiceError() {
+func (s *HandlerTestSuite) TestEmailGetServiceError() {
 	s.mockNotif.On("GetSender", mock.Anything, "missing").
 		Return((*ncommon.NotificationSenderDTO)(nil), &notification.ErrorSenderNotFound)
 
@@ -719,7 +675,7 @@ func (s *EmailHandlerTestSuite) TestGetServiceError() {
 	s.Equal(http.StatusNotFound, rr.Code)
 }
 
-func (s *EmailHandlerTestSuite) TestGetFromDTOError() {
+func (s *HandlerTestSuite) TestEmailGetFromDTOError() {
 	s.mockNotif.On("GetSender", mock.Anything, "em-1").Return(&ncommon.NotificationSenderDTO{
 		ID: "em-1", Type: ncommon.NotificationSenderTypeEmail, Provider: stubProvider,
 	}, (*tidcommon.ServiceError)(nil))
@@ -731,14 +687,14 @@ func (s *EmailHandlerTestSuite) TestGetFromDTOError() {
 	s.Equal(http.StatusInternalServerError, rr.Code)
 }
 
-func (s *EmailHandlerTestSuite) TestUpdateEmptyID() {
-	req := httptest.NewRequest(http.MethodPut, "/connections/email/", bytes.NewReader(s.stubBody()))
+func (s *HandlerTestSuite) TestEmailUpdateEmptyID() {
+	req := httptest.NewRequest(http.MethodPut, "/connections/email/", bytes.NewReader(s.emailStubBody()))
 	rr := httptest.NewRecorder()
 	updateEmailConnection(s.handler, rr, req, stubProvider, emailStubToDTO, emailStubFromDTO)
 	s.Equal(http.StatusBadRequest, rr.Code)
 }
 
-func (s *EmailHandlerTestSuite) TestUpdateInvalidBody() {
+func (s *HandlerTestSuite) TestEmailUpdateInvalidBody() {
 	req := httptest.NewRequest(http.MethodPut, "/connections/email/em-1", bytes.NewReader([]byte("{bad")))
 	req.SetPathValue("id", "em-1")
 	rr := httptest.NewRecorder()
@@ -746,43 +702,43 @@ func (s *EmailHandlerTestSuite) TestUpdateInvalidBody() {
 	s.Equal(http.StatusBadRequest, rr.Code)
 }
 
-func (s *EmailHandlerTestSuite) TestUpdateToDTOError() {
-	req := httptest.NewRequest(http.MethodPut, "/connections/email/em-1", bytes.NewReader(s.stubBody()))
+func (s *HandlerTestSuite) TestEmailUpdateToDTOError() {
+	req := httptest.NewRequest(http.MethodPut, "/connections/email/em-1", bytes.NewReader(s.emailStubBody()))
 	req.SetPathValue("id", "em-1")
 	rr := httptest.NewRecorder()
 	updateEmailConnection(s.handler, rr, req, stubProvider, emailStubToDTOErr, emailStubFromDTO)
 	s.Equal(http.StatusInternalServerError, rr.Code)
 }
 
-func (s *EmailHandlerTestSuite) TestUpdateServiceError() {
+func (s *HandlerTestSuite) TestEmailUpdateServiceError() {
 	s.mockNotif.On("GetSender", mock.Anything, "em-1").Return(&ncommon.NotificationSenderDTO{
 		ID: "em-1", Type: ncommon.NotificationSenderTypeEmail, Provider: stubProvider,
 	}, (*tidcommon.ServiceError)(nil))
 	s.mockNotif.On("UpdateSender", mock.Anything, "em-1", mock.Anything).
 		Return((*ncommon.NotificationSenderDTO)(nil), &tidcommon.InternalServerError)
 
-	req := httptest.NewRequest(http.MethodPut, "/connections/email/em-1", bytes.NewReader(s.stubBody()))
+	req := httptest.NewRequest(http.MethodPut, "/connections/email/em-1", bytes.NewReader(s.emailStubBody()))
 	req.SetPathValue("id", "em-1")
 	rr := httptest.NewRecorder()
 	updateEmailConnection(s.handler, rr, req, stubProvider, emailStubToDTO, emailStubFromDTO)
 	s.Equal(http.StatusInternalServerError, rr.Code)
 }
 
-func (s *EmailHandlerTestSuite) TestUpdateFromDTOError() {
+func (s *HandlerTestSuite) TestEmailUpdateFromDTOError() {
 	s.mockNotif.On("GetSender", mock.Anything, "em-1").Return(&ncommon.NotificationSenderDTO{
 		ID: "em-1", Type: ncommon.NotificationSenderTypeEmail, Provider: stubProvider,
 	}, (*tidcommon.ServiceError)(nil))
 	s.mockNotif.On("UpdateSender", mock.Anything, "em-1", mock.Anything).
 		Return(&ncommon.NotificationSenderDTO{ID: "em-1"}, (*tidcommon.ServiceError)(nil))
 
-	req := httptest.NewRequest(http.MethodPut, "/connections/email/em-1", bytes.NewReader(s.stubBody()))
+	req := httptest.NewRequest(http.MethodPut, "/connections/email/em-1", bytes.NewReader(s.emailStubBody()))
 	req.SetPathValue("id", "em-1")
 	rr := httptest.NewRecorder()
 	updateEmailConnection(s.handler, rr, req, stubProvider, emailStubToDTO, emailStubFromDTOErr)
 	s.Equal(http.StatusInternalServerError, rr.Code)
 }
 
-func (s *EmailHandlerTestSuite) TestListInstancesServiceError() {
+func (s *HandlerTestSuite) TestEmailListInstancesServiceError() {
 	s.mockNotif.On("ListSendersByType", mock.Anything, ncommon.NotificationSenderTypeEmail).
 		Return(([]ncommon.NotificationSenderDTO)(nil), &tidcommon.InternalServerError)
 
@@ -792,7 +748,7 @@ func (s *EmailHandlerTestSuite) TestListInstancesServiceError() {
 	s.Equal(http.StatusInternalServerError, rr.Code)
 }
 
-func (s *EmailHandlerTestSuite) TestListInstancesSuccess() {
+func (s *HandlerTestSuite) TestEmailListInstancesSuccess() {
 	testListInstancesSuccessHelper(
 		s.T(),
 		s.mockNotif,
@@ -804,14 +760,14 @@ func (s *EmailHandlerTestSuite) TestListInstancesSuccess() {
 	)
 }
 
-func (s *EmailHandlerTestSuite) TestDeleteEmptyID() {
+func (s *HandlerTestSuite) TestEmailDeleteEmptyID() {
 	req := httptest.NewRequest(http.MethodDelete, "/connections/email/", nil)
 	rr := httptest.NewRecorder()
 	s.handler.deleteEmailInstance(stubProvider)(rr, req)
 	s.Equal(http.StatusBadRequest, rr.Code)
 }
 
-func (s *EmailHandlerTestSuite) TestDeleteServiceError() {
+func (s *HandlerTestSuite) TestEmailDeleteServiceError() {
 	s.mockNotif.On("GetSender", mock.Anything, "missing").
 		Return((*ncommon.NotificationSenderDTO)(nil), &notification.ErrorSenderNotFound)
 
@@ -822,7 +778,7 @@ func (s *EmailHandlerTestSuite) TestDeleteServiceError() {
 	s.Equal(http.StatusNotFound, rr.Code)
 }
 
-func (s *EmailHandlerTestSuite) TestDeleteSuccess() {
+func (s *HandlerTestSuite) TestEmailDeleteSuccess() {
 	s.mockNotif.On("GetSender", mock.Anything, "em-1").Return(&ncommon.NotificationSenderDTO{
 		ID: "em-1", Type: ncommon.NotificationSenderTypeEmail, Provider: stubProvider,
 	}, (*tidcommon.ServiceError)(nil))
